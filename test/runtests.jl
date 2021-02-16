@@ -12,6 +12,8 @@ using Test
     @testset "Database and absorption calculation" begin
         @test_nowarn fetch!("StdAtm", iso_id(7, 1), 13000, 13150, [:standard])
         @test_nowarn α(["StdAtm"])
+        @test_nowarn α(["StdAtm"], :voigt)
+        @test_nowarn α(["StdAtm"], :lorentz)
         @test isapprox(absorption_spectrum([0.], 1)[1], 0.0)
         @test isapprox(transmittance_spectrum([0.], 1)[1], 1.0)
         @test isapprox(optical_depth([0.], 1)[1], 0.0)
