@@ -1,6 +1,6 @@
 module HITRAN
 
-using Printf, CSV, Downloads, SQLite, FileIO,
+using Printf, CSV, Downloads, SQLite, FileIO, JLD2,
      Interpolations, SpecialFunctions
 
 const module_path = dirname(pathof(HITRAN))
