@@ -207,7 +207,7 @@ end
 function download_HITRAN(    
     url::String,
     parameters::AbstractVector{String};
-    verbose=true)
+    verbose=false)
         
     tmp_file = tempname()
     if verbose
@@ -216,7 +216,7 @@ function download_HITRAN(
     response = Downloads.request(
         url;
         output=tmp_file,
-        progress=print_progress,                
+        progress=verbose ? print_progress : nothing, 
         throw=false        
     )
     #=if isa(response, RequestError)

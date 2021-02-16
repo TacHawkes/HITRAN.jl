@@ -9,6 +9,6 @@ using Test
             tolerance = 10.0^(ceil(Int, log10(q_t0))-3)
             @test isapprox(tips(i, HITRAN.c_T_ref), q_t0, atol=tolerance)
         end
-    end
+    end    
 end
 
