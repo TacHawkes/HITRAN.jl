@@ -88,7 +88,7 @@ transmission = transmittance_spectrum(absorption_coefficient, 100e2);
 
 ## Full code & plotting
 
-Let's have a look:
+Let's put everything so far together and create a plot:
 
 ```@example
 using HITRAN, Plots
@@ -108,7 +108,7 @@ plot(
     title="Transmission along a 100 m air column",
     leg=false
 )
-savefig("air-plot.svg");
+savefig("air-plot.svg"); nothing # hide
 ```
 
 ![](air-plot.svg)

@@ -10,7 +10,7 @@ end
 
 Sij_T(S_ij_ref, T, T_ref, Q_T, Q_T_ref, e_lower, ν_ij) = S_ij_ref * Q_T_ref / Q_T * exp(-c_c2 * e_lower / T) * (1 - exp(-c_c2 * ν_ij / T)) / exp(-c_c2 * e_lower / T_ref) * (1 - exp(-c_c2 * ν_ij / T_ref))
 
-γ_Doppler(T, ν_ij, M) = ν_ij / c_c_SI * √(2c_NA_SI * c_kB_SI * T * log(2) / (M*1e-3))
+γ_Doppler(T, ν_ij, M) = ν_ij / c_c_SI * √(2c_NA_SI * c_kB_SI * T * log(2) / (M * 1e-3))
 
 γ_collision_0(γ0_ref, T, T_ref, p, p_ref, n_diluent) = γ0_ref * p / p_ref * (T_ref / T)^n_diluent
 
@@ -43,7 +43,7 @@ function get_components(comps::AbstractVector{Tuple{T,T}}) where T <: Int
     sql = " SELECT  molecule_id, local_id, abundance 
             FROM    isotopologues
             WHERE 	(molecule_id, local_id)
-            IN 		(VALUES " * join(["(" * join("?"^length(t) , ',') * ")" for t in comps], ',') * ")"
+            IN 		(VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in comps], ',') * ")"
     result = query_local_db(sql, [i for t in comps for i in t])
     # replace components by new dict
     components = Dict{Tuple{Int,Int},AbstractFloat}()
@@ -59,7 +59,7 @@ function get_components(comps::Dict{Tuple{T,T},V}) where T <: Int where V <: Abs
     sql = " SELECT  molecule_id, local_id, abundance 
             FROM    isotopologues
             WHERE 	(molecule_id, local_id)
-            IN 		(VALUES " * join(["(" * join("?"^length(t) , ',') * ")" for t in keys(comps)], ',') * ")"
+            IN 		(VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in keys(comps)], ',') * ")"
     result = query_local_db(sql, [i for t in keys(comps) for i in t])
     # replace components by new dict
     natural_abundances = Dict{Tuple{Int,Int},AbstractFloat}()
@@ -142,7 +142,7 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
             "SELECT     * 
             FROM        " * table * "
             WHERE 	    (molec_id, local_iso_id)
-			IN 		    (VALUES " * join(["(" * join("?"^length(t) , ',') * ")" for t in keys(components)], ',') * ")
+			IN 		    (VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in keys(components)], ',') * ")
             AND         nu >= ?
             AND         nu <= ?", vcat([i for t in keys(components) for i in t], [ν_range...]))
         parameters = result.names
@@ -189,7 +189,7 @@ function hartmann_tran_reference_temperature(T)
     end
 end
 
-mutable struct HartmannTranLineParameters{T <: AbstractFloat, V <: ComplexF64}
+mutable struct HartmannTranLineParameters{T <: AbstractFloat,V <: ComplexF64}
     ν_0::T
     ν_VC::V
     γ_D::T
@@ -200,7 +200,7 @@ mutable struct HartmannTranLineParameters{T <: AbstractFloat, V <: ComplexF64}
     η::V
 end
 
-mutable struct HartmannTranDiluentParameters{T <: AbstractFloat, V <: ComplexF64}        
+mutable struct HartmannTranDiluentParameters{T <: AbstractFloat,V <: ComplexF64}        
     T_ref::T
     γ_D::T
     γ_0::T
@@ -352,8 +352,8 @@ function hartmann_tran_lineshape(
     ind_hi = searchsortedlast(ν, line.nu + ν_wing_val)    
     
     hartmann_tran_profile!(out_cache, @view(ν[ind_lo:ind_hi]), line_parameters)
-    for i=1:(ind_hi - ind_lo + 1)
-        data[ind_lo + i - 1] += factor*out_cache[i]
+    for i = 1:(ind_hi - ind_lo + 1)
+        data[ind_lo + i - 1] += factor * out_cache[i]
     end    
 end
 
@@ -363,7 +363,7 @@ function prepare_hartmann_tran_kwargs(;kwargs...)
     T_ht = hartmann_tran_reference_temperature(T)
 
     # prepare field names for diluents
-    fields = Dict{Symbol,Dict{Symbol, Symbol}}()
+    fields = Dict{Symbol,Dict{Symbol,Symbol}}()
     for diluent_name in keys(diluent)
         fields[diluent_name] = Dict(
             :γ_0 => Symbol(@sprintf("gamma_HT_0_%s_%d", diluent_name, T_ht)),
@@ -385,8 +385,8 @@ function prepare_hartmann_tran_kwargs(;kwargs...)
     return Dict(
         :T_ref_HT => T_ht,
         :fields => fields,
-        :line_parameters => HartmannTranLineParameters(0., 0.0*im, 0., 0., 0., 0., 0., 0.0*im),
-        :diluent_parameters => HartmannTranDiluentParameters(c_T_ref, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.0*im, 0., 0.0*im)
+        :line_parameters => HartmannTranLineParameters(0., 0.0 * im, 0., 0., 0., 0., 0., 0.0 * im),
+        :diluent_parameters => HartmannTranDiluentParameters(c_T_ref, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.0 * im, 0., 0.0 * im)
     )
 end
 
@@ -450,8 +450,8 @@ function voigt_lineshape(
     ind_hi = searchsortedlast(ν, line.nu + ν_wing_val)
 
     voigt_profile!(out_cache, @view(ν[ind_lo:ind_hi]), line_parameters)
-    for i=1:(ind_hi - ind_lo + 1)
-        data[ind_lo + i - 1] += factor*out_cache[i]
+    for i = 1:(ind_hi - ind_lo + 1)
+        data[ind_lo + i - 1] += factor * out_cache[i]
     end
 end
 
@@ -506,11 +506,16 @@ rautian_profile(
     Δ_0::T,
 ) where T <: AbstractFloat = hartmann_tran_profile(ν, ν_0, ν_VC, γ_D, γ_0, 0., Δ_0, 0., 0.)
 
-lorentz_profile(
+function lorentz_profile!(
+    out::AbstractVector{T},
     ν::AbstractArray{T,1},
     ν_0::T,
     γ_0::T
-) where T <: AbstractFloat = @. γ_0 / (π * (γ_0^2 + (ν - ν_0)^2))
+) where T <: AbstractFloat 
+    for i=1:length(ν)
+        out[i] = γ_0 / (π * (γ_0^2 + (ν[i] - ν_0)^2))
+    end
+end
 
 function lorentz_lineshape(
     line,
@@ -522,44 +527,45 @@ function lorentz_lineshape(
     ν_wing,
     ν_wing_hw,
     factor,
-    data;
+    data,
+    out_cache;
     kwargs...
 )    
-    # initialize lineshape specific parameters
-    γ_0 = Δ_0 = 0.0    
+    fields = kwargs[:fields]
+    line_parameters::HartmannTranLineParameters = kwargs[:line_parameters]
+    diluent_parameters::HartmannTranDiluentParameters = kwargs[:diluent_parameters]
+    # initialize lineshape specific parameters    
+    line_parameters.ν_0 = line.nu    
+    line_parameters.γ_0 = c_default_zero
+    line_parameters.Δ_0 = c_default_zero
 
-    # loop over all diluents and build combined line parameters    
+    # loop over all diluents and build combined line parameters
     for (diluent_name, diluent_abundance) in diluent                        
-        # γ_0 contribution
-        γ_0_dil = get_type(line, Symbol(@sprintf("gamma_%s", diluent_name)), 0.0)
-        n_dil = get_type(line, Symbol(@sprintf("n_%s", diluent_name)), line.n_air)
-        if (diluent_name == "self" && n_dil == 0.)            
-            n_dil = line.n_air
-        end        
-                
-        γ_0 += diluent_abundance * γ_collision_0(γ_0_dil, temperature, c_T_ref, pressure, c_p_ref, n_dil)
+        # γ_0 contribution        
+        diluent_parameters.γ_0 = get_line_parameter(line, fields[diluent_name][:γ_0])
+        diluent_parameters.n = get_line_parameter(line, fields[diluent_name][:n], :none, line.n_air)
+        if (diluent_name == "self" && diluent_parameters.n == c_default_zero)
+            diluent_parameters.n = line.n_air
+        end                        
+        line_parameters.γ_0 += diluent_abundance * γ_collision_0(diluent_parameters.γ_0, temperature, 
+                        c_T_ref, pressure, c_p_ref, diluent_parameters.n)
 
         # Δ_0 contribution
-        Δ_0_dil = get_type(line, Symbol(@sprintf("delta_%s", diluent_name)), 0.0)
-        Δ_0p_dil = get_type(line, Symbol(@sprintf("deltap_%s", diluent_name)), 0.0)
-                
-        Δ_0 += diluent_abundance * (Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref)        
+        diluent_parameters.Δ_0 = get_line_parameter(line, fields[diluent_name][:Δ_0])
+        diluent_parameters.Δ_0p = get_line_parameter(line, fields[diluent_name][:Δ_0p]) 
+        line_parameters.Δ_0 += diluent_abundance * (diluent_parameters.Δ_0 + (diluent_parameters.Δ_0p) * (temperature - c_T_ref) * pressure / c_p_ref)                        
     end
-    
+
     # use absolute or hw wing specification?
-    ν_wing_val = max(ν_wing_hw, ν_wing_hw * γ_0)
+    ν_wing_val = max(ν_wing_hw, ν_wing_hw * line_parameters.γ_0)
 
-    ind_lo = findfirst(ν .> line.nu - ν_wing_val)
-    ind_hi = findfirst(ν .> line.nu + ν_wing_val)
+    ind_lo = searchsortedfirst(ν, line.nu - ν_wing_val)
+    ind_hi = searchsortedlast(ν, line.nu + ν_wing_val)
 
-    if ind_lo === nothing
-        ind_lo = 1
+    lorentz_profile!(out_cache, @view(ν[ind_lo:ind_hi]), line_parameters.ν_0 + line_parameters.Δ_0, line_parameters.γ_0)
+    for i = 1:(ind_hi - ind_lo + 1)
+        data[ind_lo + i - 1] += factor * out_cache[i]
     end
-    if ind_hi === nothing
-        ind_hi = length(ν)
-    end
-
-    data[ind_lo:ind_hi] += factor * lorentz_profile(ν[ind_lo:ind_hi], line.nu + Δ_0, γ_0, )
 end
 
 gaussian_profile(
@@ -570,25 +576,24 @@ gaussian_profile(
 
 profile_map = Dict(
     :gauss => gaussian_profile,
-    :lorentz => lorentz_profile,
+    :lorentz => lorentz_profile!,
     :voigt => voigt_profile!,
-    :speed_dependent_voigt => speed_dependent_voigt_profile,
+    :speed_dependent_voigt => speed_dependent_voigt_profile, # unused for now
     :hartmann_tran => hartmann_tran_profile!,
-    :rautian => rautian_profile,
-    :speed_dependent_rautian => speed_dependent_rautian_profile
+    :rautian => rautian_profile, # unused for now
+    :speed_dependent_rautian => speed_dependent_rautian_profile # unused for now
 )
 
 lineshape_map = Dict(    
     :hartmann_tran => hartmann_tran_lineshape,
     :voigt => voigt_lineshape,
-    :lorentz => lorentz_lineshape
+    :lorentz => lorentz_lineshape    
 )
 
 profile_preparation_map = Dict(
     :hartmann_tran => prepare_hartmann_tran_kwargs,
     :voigt => prepare_voigt_kwargs,
-    :sdvoigt => prepare_hartmann_tran_kwargs,
-    :rautian => prepare_hartmann_tran_kwargs
+    :lorentz => prepare_voigt_kwargs  
 )
 
 # Fadeeva function
