@@ -9,6 +9,7 @@ ehthumbs.db
 Thumbs.db
 
 *.sqlite
+!/test/*.sqlite
 
 *.jl.*.cov
 *.jl.cov
