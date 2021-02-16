@@ -19,5 +19,5 @@ makedocs(
 )
 
 deploydocs(
-    repo = "https://github.com/TacHawkes/HITRAN.jl"
+    repo = "github.com/TacHawkes/HITRAN.jl.git"
 )
