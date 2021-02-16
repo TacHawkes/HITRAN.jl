@@ -1,4 +1,19 @@
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+*.sqlite
+
 *.jl.*.cov
 *.jl.cov
 *.jl.mem
+.vscode
 /Manifest.toml
+/src/tools
+/examples

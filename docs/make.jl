@@ -1,0 +1,26 @@
+using Documenter
+using HITRAN
+
+makedocs(    
+    modules = [HITRAN],
+    authors="Oliver Kliebisch <oliver@kliebisch.net> and contributors",
+    repo="https://github.com/tachawkes/hitran.jl/blob/{commit}{path}#L{line}",
+    sitename="HITRAN.jl",
+    format=Documenter.HTML(;
+        prettyurls=get(ENV, "CI", "false") == "true",
+        assets=String[],
+    ),
+    pages=[
+        "Introduction & Motivation" => "index.md",
+        "Quickstart/Example" => "quickstart.md",
+        "Local HITRAN database" => "database.md",
+        "Calculating spectra" => "spectra.md"        
+    ],
+)
+
+# Documenter can also automatically deploy documentation to gh-pages.
+# See "Hosting Documentation" and deploydocs() in the Documenter manual
+# for more information.
+#=deploydocs(
+    repo = "<repository url>"
+)=#
