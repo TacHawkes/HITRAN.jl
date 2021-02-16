@@ -108,7 +108,7 @@ plot(
     title="Transmission along a 100 m air column",
     leg=false
 )
-savefig("air-plot.svg")
+savefig("air-plot.svg");
 ```
 
 ![](air-plot.svg)

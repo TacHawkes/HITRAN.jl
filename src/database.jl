@@ -29,8 +29,8 @@ function open_database(file_path::String)
     if (haskey(tables, :name) == false || "table_hashes" ∉ tables[:name])        
         DBInterface.execute(db, 
             "CREATE TABLE table_hashes (
-                table_name VARCHAR(255) UNIQUE,
-                query_hash VARCHAR(128)
+                table_name TEXT UNIQUE,
+                query_hash TEXT
             )"
         )
     end
