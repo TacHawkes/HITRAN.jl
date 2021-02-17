@@ -51,7 +51,7 @@ wavenumbers, absorption_coefficient = α(
 )
 ```
 
-As you can see, we get a range of wavenumber values and values for the absorption coefficient right away. But wait, how does the module know the atmospheric composition we are interested in? In short: It does not! If you just specify a table name to the `α` function it will just calculate all spectral lines withing the table assuming their natural isotopologue abundance and does not take the proper gas mixture into account. See the function description of `α` for all details. For this example, we can use a neat shortcut:
+As you can see, we get a range of wavenumber values and values for the absorption coefficient right away. But wait, how does the module know the atmospheric composition we are interested in? In short: It does not! If you just specify a table name to the `α` function it will just calculate all spectral lines withing the table assuming their natural isotopologue abundance and does not take the proper gas mixture into account. See the function description of [`α`](@ref) for all details. For this example, we can use a neat shortcut:
 
 ```@repl o2_demo
 wavenumbers, absorption_coefficient = α(
@@ -60,7 +60,7 @@ wavenumbers, absorption_coefficient = α(
 )
 ```
 
-The `default_environment`ist a `Dict` containing standard mixtures. For now this is only dry air by using the key `:dry_air`.
+The `default_environment` variable is a `Dict` containing standard mixtures. For now this is only dry air by using the key `:dry_air`.
 Great, what is left? Actually to match the behaviour of the HAPI, we also have to specify how our species is diluted by the environment.
 
 !!! warning "Calculate diluted mixtures separately and sum them afterwards"

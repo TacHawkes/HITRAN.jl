@@ -30,7 +30,7 @@ function get_components(tables::AbstractVector{String})
     end
     sql = join(subqueries, " UNION ALL ")
     result = query_local_db(sql)        
-    components = Dict{Tuple{Int,Int},AbstractFloat}()
+    components = Dict{Tuple{Integer,Integer},AbstractFloat}()
     for row in result
         components[(row.molecule_id, row.local_id)] = row.abundance
     end            
@@ -38,7 +38,7 @@ function get_components(tables::AbstractVector{String})
     return components, components
 end
 
-function get_components(comps::AbstractVector{Tuple{T,T}}) where T <: Int
+function get_components(comps::AbstractVector{Tuple{T,T}}) where T <: Integer
     # load the natural abundances
     sql = " SELECT  molecule_id, local_id, abundance 
             FROM    isotopologues
@@ -46,7 +46,7 @@ function get_components(comps::AbstractVector{Tuple{T,T}}) where T <: Int
             IN 		(VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in comps], ',') * ")"
     result = query_local_db(sql, [i for t in comps for i in t])
     # replace components by new dict
-    components = Dict{Tuple{Int,Int},AbstractFloat}()
+    components = Dict{Tuple{Integer,Integer},AbstractFloat}()
     for row in result
         components[(row.molecule_id, row.local_id)] = row.abundance
     end        
@@ -54,7 +54,7 @@ function get_components(comps::AbstractVector{Tuple{T,T}}) where T <: Int
     return components, components
 end
 
-function get_components(comps::Dict{Tuple{T,T},V}) where T <: Int where V <: AbstractFloat
+function get_components(comps::Dict{Tuple{T,T},V}) where T <: Integer where V <: AbstractFloat
     # load the natural abundances
     sql = " SELECT  molecule_id, local_id, abundance 
             FROM    isotopologues
@@ -62,7 +62,7 @@ function get_components(comps::Dict{Tuple{T,T},V}) where T <: Int where V <: Abs
             IN 		(VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in keys(comps)], ',') * ")"
     result = query_local_db(sql, [i for t in keys(comps) for i in t])
     # replace components by new dict
-    natural_abundances = Dict{Tuple{Int,Int},AbstractFloat}()
+    natural_abundances = Dict{Tuple{Integer,Integer},AbstractFloat}()
     for row in result
         natural_abundances[(row.molecule_id, row.local_id)] = row.abundance
     end
@@ -106,7 +106,26 @@ function parse_kwargs(tables;kwargs...)
 end
 
 """
-    α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
+    α(tables::AbstractVector{String} [, profile=:hartmann_tran; kwargs...])
+
+Computes the absorption coefficient using line-by-line data stored in the
+database tables specified in `tables`. The lineshape can be optionally specified
+using the `profile` argument and one of the Symbol keys `:hartmann_tran`, `:voigt`,
+`:lorentz`, `:gauss`. If no keyword arguments are specified, they will be automatically
+chosen from the tables provided.
+
+# Keyword arguments
+- `components`: the components of the gas mixture for the calculation. Can be either a vector of tuples with `(molecule_id, local_iso_id)`
+                or a `Dict` with the `(molecule_id, local_iso_id)` tuple as key and the abundance as value. If the vector of tuples is supplied
+                the natural abundance will be used, so this makes no sense for gas mixtures other than isotopologues of the same molecule
+- `intensity_threshold`: the minimum line strength in ``cm^{-1}/(\\text{molecule} \\cdot cm^{-2})``
+- `pressure`: the environmental pressure in atmospheres (default: $c_p_ref atm)
+- `temperature`: the environmental temperature in Kelvin (default: $c_T_ref K)
+- `ν_range`: a tuple of the form (ν_min, ν_max) where ν_min/ν_max is the minimum/maximum wavenumber for the absorption_spectrum respectively in ``cm^{-1}`
+- `ν_step`: the wavenumber step in ``cm^{-1}`` (default: 0.01 ``cm^{-1}``)
+- `ν_wing`: absolute calculation width of a line in ``cm^{-1}`` (default: 0 ``cm^{-1}``)
+- `ν_wing_hw`: relative calculation width of a line in multiples of a half-width (default: 50)
+- `diluent`: a `Dict` of the diluting substances, specified as `Symbol`, e.g. `:air` or `:H2O` for the key and the relative concentration as key (default: `Dict(:self => 1.0)`)
 """
 function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
     # parse and prepare input arguments
@@ -189,7 +208,7 @@ function hartmann_tran_reference_temperature(T)
     end
 end
 
-mutable struct HartmannTranLineParameters{T <: AbstractFloat,V <: ComplexF64}
+mutable struct HartmannTranLineParameters{T <: AbstractFloat,V <: Complex}
     ν_0::T
     ν_VC::V
     γ_D::T
@@ -200,7 +219,7 @@ mutable struct HartmannTranLineParameters{T <: AbstractFloat,V <: ComplexF64}
     η::V
 end
 
-mutable struct HartmannTranDiluentParameters{T <: AbstractFloat,V <: ComplexF64}        
+mutable struct HartmannTranDiluentParameters{T <: AbstractFloat,V <: Complex}        
     T_ref::T
     γ_D::T
     γ_0::T
@@ -229,7 +248,7 @@ function hartmann_tran_profile!(
     Δ_0::T,
     Δ_2::T,
     η::V
-) where T <: AbstractFloat where V <: ComplexF64
+) where T <: AbstractFloat where V <: Complex
 
     C_0 = γ_0 + im * Δ_0
     C_2 = γ_2 + im * Δ_2
@@ -345,7 +364,7 @@ function hartmann_tran_lineshape(
 
     line_parameters.ν_VC += line_parameters.η * (line_parameters.γ_0 - im * line_parameters.Δ_0)    
     # use absolute or hw wing specification?
-    ν_wing_val = max(ν_wing_hw, ν_wing_hw * line_parameters.γ_0, ν_wing_hw * γ_D)
+    ν_wing_val = max(ν_wing, ν_wing_hw * line_parameters.γ_0, ν_wing_hw * γ_D)
 
     # find a suitable bisection for integrating the data into the vector
     ind_lo = searchsortedfirst(ν, line.nu - ν_wing_val)
@@ -392,7 +411,7 @@ end
 
 voigt_profile!(
     out::AbstractVector{T},
-    ν::AbstractArray{T,1},
+    ν::AbstractVector{T},
     ν_0::T,    
     γ_D::T,
     γ_0::T
@@ -444,7 +463,7 @@ function voigt_lineshape(
     end
     
     # use absolute or hw wing specification?
-    ν_wing_val = max(ν_wing_hw, ν_wing_hw * line_parameters.γ_0, ν_wing_hw * γ_D)
+    ν_wing_val = max(ν_wing, ν_wing_hw * line_parameters.γ_0, ν_wing_hw * γ_D)
 
     ind_lo = searchsortedfirst(ν, line.nu - ν_wing_val)
     ind_hi = searchsortedlast(ν, line.nu + ν_wing_val)
@@ -477,7 +496,7 @@ function prepare_voigt_kwargs(;kwargs...)
 end
 
 speed_dependent_voigt_profile(
-    ν::AbstractArray{T,1},
+    ν::AbstractVector{T},
     ν_0::T,    
     γ_D::T,
     γ_0::T,
@@ -487,7 +506,7 @@ speed_dependent_voigt_profile(
 ) where T <: AbstractFloat = hartmann_tran_profile(ν, ν_0, 0., γ_D, γ_0, γ_2, Δ_0, Δ_2, 0.)
 
 speed_dependent_rautian_profile(
-    ν::AbstractArray{T,1},
+    ν::AbstractVector{T},
     ν_0::T,
     ν_VC::T,
     γ_D::T,
@@ -498,7 +517,7 @@ speed_dependent_rautian_profile(
 ) where T <: AbstractFloat = hartmann_tran_profile(ν, ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, 0.)
 
 rautian_profile(
-    ν::AbstractArray{T,1},
+    ν::AbstractVector{T},
     ν_0::T,
     ν_VC::T,
     γ_D::T,
@@ -508,10 +527,10 @@ rautian_profile(
 
 function lorentz_profile!(
     out::AbstractVector{T},
-    ν::AbstractArray{T,1},
+    ν::AbstractVector{T},
     ν_0::T,
     γ_0::T
-) where T <: AbstractFloat 
+) where T <: AbstractFloat     
     for i=1:length(ν)
         out[i] = γ_0 / (π * (γ_0^2 + (ν[i] - ν_0)^2))
     end
@@ -557,7 +576,7 @@ function lorentz_lineshape(
     end
 
     # use absolute or hw wing specification?
-    ν_wing_val = max(ν_wing_hw, ν_wing_hw * line_parameters.γ_0)
+    ν_wing_val = max(ν_wing, ν_wing_hw * line_parameters.γ_0)
 
     ind_lo = searchsortedfirst(ν, line.nu - ν_wing_val)
     ind_hi = searchsortedlast(ν, line.nu + ν_wing_val)
@@ -568,14 +587,56 @@ function lorentz_lineshape(
     end
 end
 
-gaussian_profile(
-    ν::AbstractArray{T,1},
+function gauss_profile!(
+    out::AbstractVector{T},
+    ν::AbstractVector{T},
     ν_0::T,
     γ_D::T    
-) where T <: AbstractFloat = @. √(log(2 / π)) / γ_D * exp(-log(2) * ((ν - ν_0) / γ_D)^2) 
+) where T <: AbstractFloat
+    for i=1:length(ν)
+        out[i] = √(log(2) / π) / γ_D * exp(-log(2) * ((ν[i] - ν_0) / γ_D)^2)  
+    end
+end
+
+function gauss_lineshape(
+    line,
+    diluent,
+    temperature,
+    pressure,
+    γ_D,
+    ν,
+    ν_wing,
+    ν_wing_hw,
+    factor,
+    data,
+    out_cache;
+    kwargs...
+)        
+    line_parameters::HartmannTranLineParameters = kwargs[:line_parameters]
+    # initialize lineshape specific parameters    
+    line_parameters.ν_0 = line.nu        
+    line_parameters.Δ_0 = get_line_parameter(line, :delta_air) * pressure / c_p_ref  
+
+    # use absolute or hw wing specification?
+    ν_wing_val = max(ν_wing, ν_wing_hw * line_parameters.γ_D)
+
+    ind_lo = searchsortedfirst(ν, line.nu - ν_wing_val)
+    ind_hi = searchsortedlast(ν, line.nu + ν_wing_val)
+
+    gauss_profile!(out_cache, @view(ν[ind_lo:ind_hi]), line_parameters.ν_0 + line_parameters.Δ_0, γ_D)
+    for i = 1:(ind_hi - ind_lo + 1)
+        data[ind_lo + i - 1] += factor * out_cache[i]
+    end
+end
+
+function prepare_gauss_kwargs(;kwargs...)        
+    return Dict(                
+        :line_parameters => HartmannTranLineParameters(0., 0.0 * im, 0., 0., 0., 0., 0., 0.0 * im)        
+    )
+end
 
 profile_map = Dict(
-    :gauss => gaussian_profile,
+    :gauss => gauss_profile!,
     :lorentz => lorentz_profile!,
     :voigt => voigt_profile!,
     :speed_dependent_voigt => speed_dependent_voigt_profile, # unused for now
@@ -587,13 +648,15 @@ profile_map = Dict(
 lineshape_map = Dict(    
     :hartmann_tran => hartmann_tran_lineshape,
     :voigt => voigt_lineshape,
-    :lorentz => lorentz_lineshape    
+    :lorentz => lorentz_lineshape,
+    :gauss => gauss_lineshape   
 )
 
 profile_preparation_map = Dict(
     :hartmann_tran => prepare_hartmann_tran_kwargs,
     :voigt => prepare_voigt_kwargs,
-    :lorentz => prepare_voigt_kwargs  
+    :lorentz => prepare_voigt_kwargs,
+    :gauss => prepare_gauss_kwargs 
 )
 
 # Fadeeva function
