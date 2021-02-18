@@ -117,7 +117,7 @@ chosen from the tables provided.
 # Keyword arguments
 - `components`: the components of the gas mixture for the calculation. Can be either a vector of tuples with `(molecule_id, local_iso_id)`
                 or a `Dict` with the `(molecule_id, local_iso_id)` tuple as key and the abundance as value. If the vector of tuples is supplied
-                the natural abundance will be used, so this makes no sense for gas mixtures other than isotopologues of the same molecule
+                the natural abundance will be used, so this makes no sense for gas mixtures other than isotopologues of the same molecule.                
 - `intensity_threshold`: the minimum line strength in ``cm^{-1}/(\\text{molecule} \\cdot cm^{-2})``
 - `pressure`: the environmental pressure in atmospheres (default: $c_p_ref atm)
 - `temperature`: the environmental temperature in Kelvin (default: $c_T_ref K)
