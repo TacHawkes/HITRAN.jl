@@ -15,6 +15,12 @@ function current_db()
 end
 current_db(db::SQLite.DB) = (CURRENT_DB.cur_db = db)
 
+"""
+    open_database(file_path::String)
+
+Opens the SQLite database at the given file path and sets it as the current database. 
+Only use this if you want to use multiple different database.
+"""
 function open_database(file_path::String)
     db = SQLite.DB(file_path)
 
@@ -76,8 +82,24 @@ function fetch!(
 
     # update hash
     DBInterface.execute(db, "REPLACE INTO table_hashes VALUES (?, ?)", [name, bytes2hex(sha2_512(url))])
+    
+    nothing
 end
 
+"""
+    fetch!([db,] name, global_ids, ν_min, ν_max, parameters)
+
+Fetches new data from HITRANonline and stores it in the current database in the table
+given by `name`. If the table with the given parameters already exists, no data download will be initiated.
+
+# Arguments
+- `db`: The database to use for storage (optional)
+- `name`: The table name which can subsequently used as source table for the [`α`](@ref) function
+- `global_ids`: The global isotopologue ids to consider. You can also provide a tuple (or an array of tuples) with `molecule_id`, `local_id` as identifiers
+- `ν_min`: The minimum wavenumber in ``cm^{-1}`` to consider
+- `ν_max`: The minimum wavenumber in ``cm^{-1}`` to consider
+- `parameters`: A list of parameters to fetch. You can use parameter groups using Symbols as shortcuts, e.g. :standard for all HITRAN standard parameters. 
+"""
 fetch!(    
     name            :: String,
     global_ids      :: Union{T, AbstractVector{T}},
@@ -93,7 +115,7 @@ function fetch!(
     ν_min           :: Number,
     ν_max           :: Number,
     parameters      :: Union{Symbol, AbstractVector{Symbol}}=:standard
-) where T <: Int
+) where T <: Integer
     if isa(parameters, AbstractArray)
         parameters = merge_groups(:standard, parameters...)
     else
@@ -108,7 +130,7 @@ fetch!(
     ν_min           :: Number,
     ν_max           :: Number,
     parameters      :: Union{Symbol, AbstractVector{Symbol}}=:standard
-) where {T <: Int} = fetch!(current_db(), name, global_ids, ν_min, ν_max, parameters)
+) where {T <: Integer} = fetch!(current_db(), name, global_ids, ν_min, ν_max, parameters)
 
 fetch!(
     name            :: String,
@@ -116,7 +138,7 @@ fetch!(
     ν_min           :: Number,
     ν_max           :: Number,
     parameters      :: Union{Symbol, AbstractVector{Symbol}}=:standard
-) where {T <: Int} = fetch!(current_db(), name, iso_id(global_ids...),ν_min, ν_max, parameters)
+) where {T <: Integer} = fetch!(current_db(), name, iso_id(global_ids...),ν_min, ν_max, parameters)
 
 fetch!(
     name            :: String,
@@ -124,9 +146,18 @@ fetch!(
     ν_min           :: Number,
     ν_max           :: Number,
     parameters      :: Union{Symbol, AbstractVector{Symbol}}=:standard
-) where T <: Int = fetch!(current_db(), name, iso_id([i for i in global_ids[1]], [i for i in global_ids[2]]),ν_min, ν_max, parameters)
+) where T <: Integer = fetch!(current_db(), name, iso_id([i for i in global_ids[1]], [i for i in global_ids[2]]),ν_min, ν_max, parameters)
 
-function iso_id(db, M::T, I::T) where T <: Union{Int, AbstractVector{Int}}
+"""
+    iso_id([db::SQLite.DB,] M::T, I::T) where T <: Union{Integer, AbstractVector{Integer}}
+
+Returns the global isotopologue IDs for the given molecule ids and local ids provided either as single value or as array for both parameters.
+
+# Arguments
+- `M`: molecule id or array of ids
+- `I`: local isotopologue id or array of ids
+"""
+function iso_id(db::SQLite.DB, M::T, I::T) where T <: Union{Integer, AbstractVector{Integer}}
     res = DBInterface.execute(db, 
         "SELECT     global_id 
         FROM        isotopologues 
@@ -139,8 +170,13 @@ function iso_id(db, M::T, I::T) where T <: Union{Int, AbstractVector{Int}}
         return res[:, :global_id]
     end
 end
-iso_id(M::T, I::T) where T <: Union{Int, AbstractVector{Int}} = iso_id(current_db(), M, I)
+iso_id(M::T, I::T) where T <: Union{Integer, AbstractVector{Integer}} = iso_id(current_db(), M, I)
 
+"""
+    iso_id([db::SQLite.DB,] formulas::T) where T <: Union{String, AbstractVector{String}}
+
+Returns the global isotopologue IDs for the given molecule or isotopologue formulas.
+"""
 function iso_id(db::SQLite.DB, formulas::T) where T <: Union{String, AbstractVector{String}}
     search_str = SQLite.esc_id(formulas)
 
@@ -161,13 +197,13 @@ function iso_id(db::SQLite.DB, formulas::T) where T <: Union{String, AbstractVec
 end
 iso_id(formulas::T) where T <: Union{String, AbstractVector{String}} = iso_id(current_db(), formulas)
 
-function isotopologue(db::SQLite.DB, global_id::Int)    
+function isotopologue(db::SQLite.DB, global_id::Integer)    
     DBInterface.execute(db, 
         "SELECT     * 
         FROM        isotopologues
         WHERE       global_id = ?", [global_id]) |> DataFrame
 end
-isotopologue(global_id::Int) = isotopologue(current_db(), global_id)
+isotopologue(global_id::Integer) = isotopologue(current_db(), global_id)
 
 query_local_db(db::SQLite.DB, sql::AbstractString, params=()) = DBInterface.execute(db, sql, params)
 query_local_db(sql::AbstractString, params=()) = query_local_db(current_db(), sql, params)

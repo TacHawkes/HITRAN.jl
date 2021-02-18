@@ -16,7 +16,7 @@ function molar_mass(MI)
 end
 
 ## Default data for molecules and isotopologues for new databases
-molecules = DataFrame(id=Int[], formula=String[], name=String[])
+const molecules = DataFrame(id=Int[], formula=String[], name=String[])
 push!(molecules,
     (1, "H2O", "Water"),
     (2, "CO2", "Carbon Dioxide"),
@@ -70,7 +70,7 @@ push!(molecules,
     (53, "CS2", "Carbon disulfide")
 )
 
-isotopologues = DataFrame(
+const isotopologues = DataFrame(
     molecule_id=Int[],
     global_id=Int[],
     local_id=Int[],

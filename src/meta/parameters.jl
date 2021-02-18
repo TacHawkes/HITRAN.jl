@@ -34,4 +34,4 @@ parameter_groups = Dict(
 parameter_groups[:voigt_all] = merge_groups(:voigt_air, :voigt_self, :voigt_h2, :voigt_co2, :voigt_he, :voigt_h2o, :voigt_linemixing)
 parameter_groups[:ht_all] = merge_groups(:ht_self, :ht_air)
 
-parameter_groups[:all] = merge_groups(:voigt_all, :ht_all)
+parameter_groups[:all] = merge_groups(:standard, :labels, :voigt_all, :ht_all)

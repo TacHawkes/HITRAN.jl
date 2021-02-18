@@ -4,7 +4,17 @@ function get_line_parameter(line::SQLite.Row, parameter::Symbol, fallback::Symbo
     elseif haskey(line, fallback) && typeof(line[fallback]) <: parameter_type
         return line[fallback]
     else
-        return default
+        return convert(parameter_type, default)
+    end
+end
+
+function get_line_parameter!(target, line::SQLite.Row, parameter::Symbol, fallback::Symbol=:none, default=c_default_zero, parameter_type::Type=AbstractFloat)
+    if haskey(line, parameter) && typeof(line[parameter]) <: parameter_type
+        target = oftype(target, line[parameter])
+    elseif haskey(line, fallback) && typeof(line[fallback]) <: parameter_type
+        target = oftype(target, line[fallback])
+    else
+        target = oftype(target, default)
     end
 end
 
@@ -13,7 +23,6 @@ Sij_T(S_ij_ref, T, T_ref, Q_T, Q_T_ref, e_lower, ν_ij) = S_ij_ref * Q_T_ref / Q
 γ_Doppler(T, ν_ij, M) = ν_ij / c_c_SI * √(2c_NA_SI * c_kB_SI * T * log(2) / (M * 1e-3))
 
 γ_collision_0(γ0_ref, T, T_ref, p, p_ref, n_diluent) = γ0_ref * p / p_ref * (T_ref / T)^n_diluent
-
 
 function get_components(tables::AbstractVector{String})
     # use all components in the tables and get their natural abundance
@@ -121,7 +130,7 @@ chosen from the tables provided.
 - `intensity_threshold`: the minimum line strength in ``cm^{-1}/(\\text{molecule} \\cdot cm^{-2})``
 - `pressure`: the environmental pressure in atmospheres (default: $c_p_ref atm)
 - `temperature`: the environmental temperature in Kelvin (default: $c_T_ref K)
-- `ν_range`: a tuple of the form (ν_min, ν_max) where ν_min/ν_max is the minimum/maximum wavenumber for the absorption_spectrum respectively in ``cm^{-1}`
+- `ν_range`: a tuple of the form (ν_min, ν_max) where ν_min/ν_max is the minimum/maximum wavenumber for the absorption_spectrum respectively in ``cm^{-1}``
 - `ν_step`: the wavenumber step in ``cm^{-1}`` (default: 0.01 ``cm^{-1}``)
 - `ν_wing`: absolute calculation width of a line in ``cm^{-1}`` (default: 0 ``cm^{-1}``)
 - `ν_wing_hw`: relative calculation width of a line in multiples of a half-width (default: 50)
@@ -320,8 +329,10 @@ function hartmann_tran_lineshape(
 
         diluent_parameters.T_ref = T_ref_HT
         # γ_0 contribution      
-        diluent_parameters.γ_0 = get_line_parameter(line, fields[diluent_name][:γ_0], fields[diluent_name][:γ_0_voigt])        
-        diluent_parameters.n = get_line_parameter(line, fields[diluent_name][:n], fields[diluent_name][:n_voigt], line.n_air)
+        #diluent_parameters.γ_0 = get_line_parameter(line, fields[diluent_name][:γ_0], fields[diluent_name][:γ_0_voigt])  
+        get_line_parameter!(diluent_parameters.γ_0, line, fields[diluent_name][:γ_0], fields[diluent_name][:γ_0_voigt])              
+        #diluent_parameters.n = get_line_parameter(line, fields[diluent_name][:n], fields[diluent_name][:n_voigt], line.n_air)
+        get_line_parameter!(diluent_parameters.n, line, fields[diluent_name][:n], fields[diluent_name][:n_voigt], line.n_air)
         if (diluent_name == "self" && diluent_parameters.n == c_default_zero)
             diluent_parameters.n = line.n_air
         end        
@@ -331,29 +342,32 @@ function hartmann_tran_lineshape(
         line_parameters.γ_0 += diluent_abundance * diluent_parameters.γ_0t
 
         # Δ_0 contribution
-        diluent_parameters.Δ_0 = get_line_parameter(line, fields[diluent_name][:Δ_0], fields[diluent_name][:Δ_0_voigt])
-        diluent_parameters.Δ_0p = get_line_parameter(line, fields[diluent_name][:Δ_0p], fields[diluent_name][:Δ_0p_voigt])
+        #diluent_parameters.Δ_0 = get_line_parameter(line, fields[diluent_name][:Δ_0], fields[diluent_name][:Δ_0_voigt])
+        get_line_parameter!(diluent_parameters.Δ_0, line, fields[diluent_name][:Δ_0], fields[diluent_name][:Δ_0_voigt])
+        #diluent_parameters.Δ_0p = get_line_parameter(line, fields[diluent_name][:Δ_0p], fields[diluent_name][:Δ_0p_voigt])
+        get_line_parameter!(diluent_parameters.Δ_0p, line, fields[diluent_name][:Δ_0p], fields[diluent_name][:Δ_0p_voigt])
         diluent_parameters.T_ref = (haskey(line, fields[diluent_name][:Δ_0]) && haskey(line, fields[diluent_name][:Δ_0p])) ? T_ref_HT : c_T_ref        
         diluent_parameters.Δ_0t = (diluent_parameters.Δ_0 + (diluent_parameters.Δ_0p) * (temperature - diluent_parameters.T_ref) * pressure / c_p_ref)
         line_parameters.Δ_0 += diluent_abundance * diluent_parameters.Δ_0t
 
         # γ_2 contribution
-        diluent_parameters.γ_2 = get_line_parameter(line, fields[diluent_name][:γ_2], :none)
+        #diluent_parameters.γ_2 = get_line_parameter(line, fields[diluent_name][:γ_2], :none)
+        get_line_parameter!(diluent_parameters.γ_2, line, fields[diluent_name][:γ_2], :none)
         diluent_parameters.γ_2t = diluent_parameters.γ_2 * pressure / c_p_ref
         line_parameters.γ_2 += diluent_abundance * diluent_parameters.γ_2t
         
         #  Δ_2 contribution
-        diluent_parameters.Δ_2 = get_line_parameter(line, fields[diluent_name][:Δ_2], :none)
+        get_line_parameter!(diluent_parameters.Δ_2, line, fields[diluent_name][:Δ_2], :none)
         diluent_parameters.Δ_2t = diluent_parameters.Δ_2 * pressure / c_p_ref
         line_parameters.Δ_2 += diluent_abundance * diluent_parameters.Δ_2t
 
         # η contribution
-        diluent_parameters.η = get_line_parameter(line, fields[diluent_name][:η], :none)
+        get_line_parameter!(diluent_parameters.η, line, fields[diluent_name][:η], :none)
         line_parameters.η += diluent_abundance * diluent_parameters.η * (diluent_parameters.γ_2t - im * diluent_parameters.Δ_2t)
 
         # ν_VC contribution
-        diluent_parameters.ν_VC = get_line_parameter(line, fields[diluent_name][:ν_VC], :none)
-        diluent_parameters.κ = get_line_parameter(line, fields[diluent_name][:κ], :none)
+        get_line_parameter!(diluent_parameters.ν_VC, line, fields[diluent_name][:ν_VC], :none)
+        get_line_parameter!(diluent_parameters.κ, line, fields[diluent_name][:κ], :none)
         line_parameters.ν_VC += diluent_abundance * diluent_parameters.ν_VC * (diluent_parameters.T_ref / temperature)^diluent_parameters.κ * pressure
         line_parameters.ν_VC -= diluent_parameters.η * diluent_abundance * (diluent_parameters.γ_0t - im * diluent_parameters.Δ_0t)
     end
@@ -448,8 +462,8 @@ function voigt_lineshape(
     # loop over all diluents and build combined line parameters
     for (diluent_name, diluent_abundance) in diluent                        
         # γ_0 contribution        
-        diluent_parameters.γ_0 = get_line_parameter(line, fields[diluent_name][:γ_0])
-        diluent_parameters.n = get_line_parameter(line, fields[diluent_name][:n], :none, line.n_air)
+        get_line_parameter!(diluent_parameters.γ_0, line, fields[diluent_name][:γ_0])
+        get_line_parameter!(diluent_parameters.n, line, fields[diluent_name][:n], :none, line.n_air)
         if (diluent_name == "self" && diluent_parameters.n == c_default_zero)
             diluent_parameters.n = line.n_air
         end                        
@@ -457,8 +471,8 @@ function voigt_lineshape(
                             c_T_ref, pressure, c_p_ref, diluent_parameters.n)
 
         # Δ_0 contribution
-        diluent_parameters.Δ_0 = get_line_parameter(line, fields[diluent_name][:Δ_0])
-        diluent_parameters.Δ_0p = get_line_parameter(line, fields[diluent_name][:Δ_0p]) 
+        get_line_parameter!(diluent_parameters.Δ_0, line, fields[diluent_name][:Δ_0])
+        get_line_parameter!(diluent_parameters.Δ_0p, line, fields[diluent_name][:Δ_0p]) 
         line_parameters.Δ_0 += diluent_abundance * (diluent_parameters.Δ_0 + (diluent_parameters.Δ_0p) * (temperature - c_T_ref) * pressure / c_p_ref)                        
     end
     
@@ -561,8 +575,8 @@ function lorentz_lineshape(
     # loop over all diluents and build combined line parameters
     for (diluent_name, diluent_abundance) in diluent                        
         # γ_0 contribution        
-        diluent_parameters.γ_0 = get_line_parameter(line, fields[diluent_name][:γ_0])
-        diluent_parameters.n = get_line_parameter(line, fields[diluent_name][:n], :none, line.n_air)
+        get_line_parameter!(diluent_parameters.γ_0, line, fields[diluent_name][:γ_0])
+        get_line_parameter!(diluent_parameters.n, line, fields[diluent_name][:n], :none, line.n_air)
         if (diluent_name == "self" && diluent_parameters.n == c_default_zero)
             diluent_parameters.n = line.n_air
         end                        
@@ -570,8 +584,8 @@ function lorentz_lineshape(
                         c_T_ref, pressure, c_p_ref, diluent_parameters.n)
 
         # Δ_0 contribution
-        diluent_parameters.Δ_0 = get_line_parameter(line, fields[diluent_name][:Δ_0])
-        diluent_parameters.Δ_0p = get_line_parameter(line, fields[diluent_name][:Δ_0p]) 
+        get_line_parameter!(diluent_parameters.Δ_0, line, fields[diluent_name][:Δ_0])
+        get_line_parameter!(diluent_parameters.Δ_0p, line, fields[diluent_name][:Δ_0p]) 
         line_parameters.Δ_0 += diluent_abundance * (diluent_parameters.Δ_0 + (diluent_parameters.Δ_0p) * (temperature - c_T_ref) * pressure / c_p_ref)                        
     end
 
@@ -615,7 +629,7 @@ function gauss_lineshape(
     line_parameters::HartmannTranLineParameters = kwargs[:line_parameters]
     # initialize lineshape specific parameters    
     line_parameters.ν_0 = line.nu        
-    line_parameters.Δ_0 = get_line_parameter(line, :delta_air) * pressure / c_p_ref  
+    get_line_parameter!(line_parameters.Δ_0, line, :delta_air) * pressure / c_p_ref  
 
     # use absolute or hw wing specification?
     ν_wing_val = max(ν_wing, ν_wing_hw * line_parameters.γ_D)

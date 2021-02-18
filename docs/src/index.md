@@ -16,7 +16,7 @@ Please note that this package is not part of my employment but a mere hobby proj
 * Calculate temperature dependent line strengths using precalculated total internal partition sums from HITRAN[^Gamache2017]
 * Calculate absorption coefficients using the flexible Hartmann-Tran [^Ngo2013] line shape model (also used to imlement speed-dependent Voigt/Rautian-Sobelman lineshapes, as well as regular Voigt and Rautian-Sobelman lineshapes). Simple lineshapes like Lorentz and Gauss/Doppler are also included.
 * Simple and convenient syntax
-* Reasonable memory footprint and performance
+* Reasonable memory footprint and performance (roughly 1 order of magnitude faster than HAPI for the shown O2 A-band example)
 
 ## Installation
 
