@@ -18,7 +18,9 @@ by the [`α`](@ref) function as a source table.
 
 ## Parameter groups
 
-ToDo: Explanation of possible parameter groups
+There is a number of parameter groups you can use to define parameter lists for fetching line-by-line data.
+For now it is recommended to use `:standard` and combine it with `:ht_air`. A list of all parameter groups
+will be listed in the future.
 
 ## Isotopologue IDs
 

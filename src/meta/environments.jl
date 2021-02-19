@@ -1,4 +1,4 @@
-default_environments = Dict(
+const default_environments = Dict(
     # only the main isotopes are used right now
     :dry_air => Dict(
         (22, 1) =>  0.780848,   #N2
