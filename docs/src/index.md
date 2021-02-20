@@ -29,8 +29,8 @@ Install the package using the package manager:
 ## Notable differences to HAPI and missing features
 
 * Total internal partition sums use the [precalculated] (https://hitran.org/docs/iso-meta/) values converted to a JLD2 binary format instead of the original Python/Fortran wrapper of [^Gamache2017]
-* CODATA2018[^Tiesinga2019] values are used for physical constants throughout the package and SI is used over cgs wherever possible
-* The Faddeeva function is calculated using Julia's [SpecialFunctions.jl](https://github.com/JuliaMath/SpecialFunctions.jl) package which is in turn using openlibm. This will maybe change in a future version to use the (presumably!?) better performing algorithm described in [^Humlíček1982] and [^Tran2013][^Tran2014]
+* CODATA2018[^Tiesinga2019] values are used for physical constants throughout the package and SI is used instead of cgs wherever possible
+* The Faddeeva function is calculated using Julia's [SpecialFunctions.jl](https://github.com/JuliaMath/SpecialFunctions.jl) package which is in turn using openlibm. Surprisingly (or not !?) this is about 30% faster than the algorithms described in [^Humlíček1982] and [^Tran2013][^Tran2014]
 * There are no convenience functions at the moment to filter the local database. However, direct SQL access to the database is possible which allows to create views to be used for spectral calculations. Therefore you can use the full power of SQL(ite) to sub-select/filter HITRAN data.
 * No instrument functions yet
 * No line-mixing

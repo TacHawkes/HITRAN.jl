@@ -127,7 +127,7 @@ chosen from the tables provided.
 - `ν_wing_hw`: relative calculation width of a line in multiples of a half-width (default: 50)
 - `diluent`: a `Dict` of the diluting substances, specified as `Symbol`, e.g. `:air` or `:H2O` for the key and the relative concentration as key (default: `Dict(:self => 1.0)`)
 """
-function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
+function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)        
     # parse and prepare input arguments
     db, intensity_threshold, pressure, temperature, ν_range, ν_min, ν_max,
     ν_step, ν_wing, ν_wing_hw, diluent, components, natural_abundances = parse_kwargs(tables;kwargs...)    
@@ -164,11 +164,17 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
 			IN 		    (VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in keys(components)], ',') * ")
             AND         nu >= ?
             AND         nu <= ?", vcat([i for t in keys(components) for i in t], [ν_range...]))
-        parameters = result.names
+        
+        q_cache = Dict{Integer, AbstractFloat}()
+        qref_cache = Dict{Integer, AbstractFloat}()
         for line in result            
             # partition sum
-            q_t = tips(line.global_iso_id, temperature)
-            q_t_ref = tips(line.global_iso_id, c_T_ref)
+            q_t = get!(q_cache, line.global_iso_id) do 
+                tips(line.global_iso_id, temperature) 
+            end
+            q_t_ref = get!(qref_cache, line.global_iso_id) do 
+                tips(line.global_iso_id, c_T_ref) 
+            end
 
             # environment adjusted line intensity
             S_ij = Sij_T(line.sw, temperature, c_T_ref, q_t, q_t_ref, line.elower, line.nu)
@@ -194,7 +200,7 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
                 data,
                 data_cache;
                 profile_kwargs...)            
-        end
+        end        
     end
 
     return ν, data
@@ -248,8 +254,7 @@ function hartmann_tran_profile!(
     Δ_0::T,
     Δ_2::T,
     η::V
-) where T <: AbstractFloat where V <: Complex
-
+) where T <: AbstractFloat where V <: Complex    
     C_0 = γ_0 + im * Δ_0
     C_2 = γ_2 + im * Δ_2
     C_0t = (1 - η) * (C_0 - 3C_2 / 2.) + ν_VC
@@ -315,7 +320,7 @@ function hartmann_tran_lineshape(
     line_parameters.ν_VC = c_default_zero
 
     # loop over all diluents and build combined line parameters
-    for (diluent_name, diluent_abundance) in diluent
+    for (diluent_name, diluent_abundance) in diluent    
         # get Hartmann-Tran or Voigt parameters if available
 
         diluent_parameters.T_ref = T_ref_HT
@@ -646,7 +651,7 @@ profile_map = Dict(
 )
 
 lineshape_map = Dict(    
-    :hartmann_tran => hartmann_tran_lineshape,
+    :hartmann_tran => hartmann_tran_lineshape,    
     :voigt => voigt_lineshape,
     :lorentz => lorentz_lineshape,
     :gauss => gauss_lineshape   
