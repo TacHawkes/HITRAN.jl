@@ -247,10 +247,17 @@ function hartmann_tran_profile!(
     end
 end
 
+# Solving the line parameter resolving using multiple dispatch
 get_line_value(value::AbstractFloat, ::Type{T}=Float64) where T = convert(T, value)
+get_line_value(value::AbstractFloat, fallback_value::AbstractFloat, ::Type{T}=Float64) where T = convert(T, value)
 get_line_value(value::AbstractString, ::Type{T}=Float64) where T = c_default_zero
+get_line_value(value::AbstractString, fallback_value::AbstractFloat, ::Type{T}=Float64) where T = convert(T, fallback_value)
+get_line_value(value::AbstractString, fallback_value::AbstractString, ::Type{T}=Float64) where T = c_default_zero
 get_line_par(line::SQLite.Row, key::Symbol, ::Type{T}=Float64) where T = get_line_value(line[key], T)
+get_line_par(line::SQLite.Row, key::Symbol, fallback_key::Symbol, ::Type{T}=Float64) where T = get_line_value(line[key], line[fallback_key], T)
+get_line_par(line::SQLite.Row, key::Symbol, fallback_key::Missing, ::Type{T}=Float64) where T = get_line_par(line, key, T)
 get_line_par(line::SQLite.Row, key::Missing)::Float64 = c_default_zero
+get_line_par(line::SQLite.Row, key::Missing, fallback_key::Missing)::Float64 = c_default_zero
 
 function hartmann_tran_lineshape(
     line            :: SQLite.Row,
@@ -268,6 +275,7 @@ function hartmann_tran_lineshape(
 ) where T <: AbstractFloat
     T_ref_HT = get(kwargs, :T_ref_HT, c_T_ref)
     fields = kwargs[:fields]
+    voigt_fields = kwargs[:voigt_fields]
     ν_0 = get_line_par(line, :nu)
     γ_D = γ_Doppler(temperature, ν_0, mass)    
     γ_0 = γ_2 = Δ_0 = Δ_2 = Float64(0.0)
@@ -279,42 +287,42 @@ function hartmann_tran_lineshape(
         # get Hartmann-Tran or Voigt parameters if available        
 
         # γ_0 contribution
-        γ_0_dil = get_line_par(line, fields[diluent_name][:γ_0])        
-        n_dil::Float64 = get_line_par(line, fields[diluent_name][:n])        
+        γ_0_dil = get_line_par(line, fields[diluent_name][:γ_0], voigt_fields[diluent_name][:γ_0])
+        n_dil::Float64 = get_line_par(line, fields[diluent_name][:n], voigt_fields[diluent_name][:n])        
         if (diluent_name == :self || n_dil == c_default_zero)
             n_dil = get_line_par(line, :n_air)
         end        
         T_ref = (haskey(line, fields[diluent_name][:γ_0]) && haskey(line, fields[diluent_name][:n])) ? T_ref_HT : c_T_ref        
         γ_0t = γ_collision_0(γ_0_dil, temperature, T_ref, pressure, 
             c_p_ref, n_dil)
-        γ_0 += diluent_abundance * γ_0t
+        γ_0 += diluent_abundance * γ_0t        
 
         # Δ_0 contribution        
-        Δ_0 = get_line_par(line, fields[diluent_name][:Δ_0])
-        Δ_0p = get_line_par(line, fields[diluent_name][:Δ_0p])        
+        Δ_0_dil = get_line_par(line, fields[diluent_name][:Δ_0], voigt_fields[diluent_name][:Δ_0])
+        Δ_0p_dil = get_line_par(line, fields[diluent_name][:Δ_0p], voigt_fields[diluent_name][:Δ_0p])
         T_ref = (haskey(line, fields[diluent_name][:Δ_0]) && haskey(line, fields[diluent_name][:Δ_0p])) ? T_ref_HT : c_T_ref        
-        Δ_0t = Δ_0 + Δ_0p * (temperature - T_ref) * pressure / c_p_ref
+        Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t
 
         # γ_2 contribution                
-        γ_2 = get_line_par(line, fields[diluent_name][:γ_2])
-        γ_2t = γ_2 * pressure / c_p_ref
+        γ_2_dil = get_line_par(line, fields[diluent_name][:γ_2])
+        γ_2t = γ_2_dil * pressure / c_p_ref
         γ_2 += diluent_abundance * γ_2t
         
         #  Δ_2 contribution                
-        Δ_2 = get_line_par(line, fields[diluent_name][:Δ_2])
-        Δ_2t = Δ_2 * pressure / c_p_ref
+        Δ_2_dil = get_line_par(line, fields[diluent_name][:Δ_2])
+        Δ_2t = Δ_2_dil * pressure / c_p_ref
         Δ_2 += diluent_abundance * Δ_2t
 
         # η contribution        
-        η = get_line_par(line, fields[diluent_name][:η])
-        η += diluent_abundance * η * (γ_2t - im * Δ_2t)
+        η_dil = get_line_par(line, fields[diluent_name][:η])
+        η += diluent_abundance * η_dil * (γ_2t - im * Δ_2t)
 
         # ν_VC contribution        
-        ν_VC = get_line_par(line, fields[diluent_name][:ν_VC])
-        κ = get_line_par(line, fields[diluent_name][:κ])
-        ν_VC += diluent_abundance * ν_VC * (T_ref / temperature)^κ * pressure
-        ν_VC -= η * diluent_abundance * (γ_0t - im * Δ_0t)
+        ν_VC_dil = get_line_par(line, fields[diluent_name][:ν_VC])
+        κ_dil = get_line_par(line, fields[diluent_name][:κ])
+        ν_VC += diluent_abundance * ν_VC_dil * (T_ref / temperature)^κ_dil * pressure
+        ν_VC -= η_dil * diluent_abundance * (γ_0t - im * Δ_0t)
     end
     
     if η != 0.
@@ -329,7 +337,7 @@ function hartmann_tran_lineshape(
     ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
     ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)    
     
-    hartmann_tran_profile!(out_cache, @view(ν[ind_lo:ind_hi]), ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, η)
+    hartmann_tran_profile!(out_cache, @view(ν[ind_lo:ind_hi]), ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, η)    
     for i = 1:(ind_hi - ind_lo + 1)
         data[ind_lo + i - 1] += factor * out_cache[i]
     end    
@@ -363,10 +371,11 @@ function prepare_hartmann_tran_kwargs(;kwargs...)
             :κ => get_symbol(column_names, Symbol(@sprintf("kappa_HT_%s", diluent_name)))            
         )
     end
-
+    voigt_args = prepare_voigt_kwargs(;kwargs...)
     return Dict(
         :T_ref_HT => T_ht,
-        :fields => fields        
+        :fields => fields,     
+        :voigt_fields => voigt_args[:fields]
     )
 end
 
