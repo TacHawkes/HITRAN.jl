@@ -422,9 +422,9 @@ function voigt_lineshape(
         γ_0 += diluent_abundance * γ_0t
 
         # Δ_0 contribution        
-        Δ_0 = get_line_par(line, fields[diluent_name][:Δ_0])
-        Δ_0p = get_line_par(line, fields[diluent_name][:Δ_0p])                
-        Δ_0t = Δ_0 + Δ_0p * (temperature - c_T_ref) * pressure / c_p_ref
+        Δ_0_dil = get_line_par(line, fields[diluent_name][:Δ_0])
+        Δ_0p_dil = get_line_par(line, fields[diluent_name][:Δ_0p])                
+        Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t       
     end
         
@@ -508,9 +508,9 @@ function lorentz_lineshape(
         γ_0 += diluent_abundance * γ_0t
 
         # Δ_0 contribution        
-        Δ_0 = get_line_par(line, fields[diluent_name][:Δ_0])
-        Δ_0p = get_line_par(line, fields[diluent_name][:Δ_0p])                
-        Δ_0t = Δ_0 + Δ_0p * (temperature - c_T_ref) * pressure / c_p_ref
+        Δ_0_dil = get_line_par(line, fields[diluent_name][:Δ_0])
+        Δ_0p_dil = get_line_par(line, fields[diluent_name][:Δ_0p])                
+        Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t
     end
 
