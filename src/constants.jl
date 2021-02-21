@@ -18,11 +18,11 @@ Reference:
     database: H2 case study. J Quant Spectrosc Radiat Transf 2016;177:75–91.
     http://dx.doi.org/10.1016/j.jqsrt.2016.01.024. 
 =#
-const c_HT_T_ref = Dict{Any, Int}(
-    (0., 100.) => 50,
-    (100., 200.) => 150,
-    (200., 400.) => 296,
-    (400., Inf) => 700)
+const c_HT_T_ref = Base.ImmutableDict(
+    (0., 100.) => 50.,
+    (100., 200.) => 150.,
+    (200., 400.) => 296.,
+    (400., Inf) => 700.)
 
 ## SI constants according to CODATA2018
 

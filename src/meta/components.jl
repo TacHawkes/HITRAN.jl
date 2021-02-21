@@ -7,7 +7,7 @@ function molar_mass(MI)
 			IN 		(VALUES " * join(["(" * join("?"^length(t) , ',') * ")" for t in MI], ',') * ")"			
 	result = query_local_db(sql, [i for t in MI for i in t])
 	
-	out = []
+	out = Float64[]
 	for row in result
 		push!(out, row.molar_mass)
 	end

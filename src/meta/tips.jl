@@ -1,6 +1,6 @@
-const tips_cache = Dict{Int, AbstractInterpolation}()
+const tips_cache = Dict{Integer, AbstractInterpolation}()
 
-function tips(iso_id::Int, temp)
+function tips(iso_id::Integer, temp::Number)
     if iso_id ∉ keys(tips_cache)        
         path = joinpath(module_path, "meta", "q", @sprintf("q%d.jld2", iso_id))
         if isfile(path) === false
