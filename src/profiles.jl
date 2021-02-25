@@ -144,7 +144,7 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
             "SELECT     * 
             FROM        " * table * "
             WHERE 	    (molec_id, local_iso_id)
-			IN 		    (VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in keys(components)], ',') * ")
+            IN 		    (VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in keys(components)], ',') * ")
             AND         nu >= ?
             AND         nu <= ?", vcat([i for t in keys(components) for i in t], [ν_range...]))
 
