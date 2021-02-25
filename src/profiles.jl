@@ -63,8 +63,8 @@ end
 
 function parse_kwargs(tables;kwargs...)    
     intensity_threshold = get(kwargs, :intensity_threshold, -Inf)
-    pressure = get(kwargs, :pressure, c_p_ref)    
-    temperature = get(kwargs, :temperature, c_T_ref)    
+    pressure = convert(Float64, get(kwargs, :pressure, c_p_ref))
+    temperature = convert(Float64, get(kwargs, :temperature, c_T_ref))
 
     ν_range = get(kwargs, :ν_range) do
         # find limits from the used tables
@@ -85,7 +85,7 @@ function parse_kwargs(tables;kwargs...)
     ν_wing_hw = get(kwargs, :ν_wing_hw, 50.)
 
     diluent = get(kwargs, :diluent) do 
-        Dict{Symbol, Float64}(:self => 1.)
+        Dict{Symbol,Float64}(:self => 1.)
     end 
     !all(0 .<= values(diluent) .<= 1) && error("Diluent must not exceed 0 or 1 for individual fractions")    
 
@@ -155,8 +155,8 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
             profile_kwargs = Dict()
         end        
         
-        q_cache = Dict{Integer, AbstractFloat}()
-        qref_cache = Dict{Integer, AbstractFloat}()        
+        q_cache = Dict{Integer,AbstractFloat}()
+        qref_cache = Dict{Integer,AbstractFloat}()        
         for line in result            
             # partition sum
             q_t = get!(q_cache, line.global_iso_id) do 
@@ -260,17 +260,17 @@ get_line_par(line::SQLite.Row, key::Missing)::Float64 = c_default_zero
 get_line_par(line::SQLite.Row, key::Missing, fallback_key::Missing)::Float64 = c_default_zero
 
 function hartmann_tran_lineshape(
-    line            :: SQLite.Row,
-    diluent         :: Dict{Symbol, T},
-    temperature     :: T,
-    pressure        :: T,
-    mass            :: T,        
-    ν               :: AbstractRange,
-    ν_wing          :: T,
-    ν_wing_hw       :: T,
-    factor          :: T,
-    data            :: AbstractVector{T},
-    out_cache       :: AbstractVector{T};
+    line::SQLite.Row,
+    diluent::Dict{Symbol,T},
+    temperature::T,
+    pressure::T,
+    mass::T,        
+    ν::AbstractRange,
+    ν_wing::T,
+    ν_wing_hw::T,
+    factor::T,
+    data::AbstractVector{T},
+    out_cache::AbstractVector{T};
     kwargs...
 ) where T <: AbstractFloat
     T_ref_HT = get(kwargs, :T_ref_HT, c_T_ref)
@@ -343,8 +343,8 @@ function hartmann_tran_lineshape(
     end    
 end
 
-get_symbol(cn::AbstractVector{Symbol}, s1::Symbol, s2::Symbol)::Union{Symbol, Missing} = s1 in cn ? s1 : s2 in cn ? s2 : missing
-get_symbol(cn::AbstractVector{Symbol}, s1::Symbol)::Union{Symbol, Missing} = s1 in cn ? s1 : missing
+get_symbol(cn::AbstractVector{Symbol}, s1::Symbol, s2::Symbol)::Union{Symbol,Missing} = s1 in cn ? s1 : s2 in cn ? s2 : missing
+get_symbol(cn::AbstractVector{Symbol}, s1::Symbol)::Union{Symbol,Missing} = s1 in cn ? s1 : missing
 
 function prepare_hartmann_tran_kwargs(;kwargs...)
     T = get(kwargs, :temperature, c_T_ref)
@@ -357,7 +357,7 @@ function prepare_hartmann_tran_kwargs(;kwargs...)
     end
 
     # prepare field names for diluents
-    fields = Dict{Symbol,Dict{Symbol,Union{Symbol, Missing}}}()
+    fields = Dict{Symbol,Dict{Symbol,Union{Symbol,Missing}}}()
     for diluent_name in keys(diluent)        
         fields[diluent_name] = Dict(
             :γ_0 => get_symbol(column_names, Symbol(@sprintf("gamma_HT_0_%s_%d", diluent_name, T_ht)), Symbol(@sprintf("gamma_%s", diluent_name))),
@@ -388,17 +388,17 @@ voigt_profile!(
 ) where T <: AbstractFloat = hartmann_tran_profile!(out, ν, ν_0, 0. + im * 0., γ_D, γ_0, 0., 0., 0., 0. + im * 0.)
 
 function voigt_lineshape(
-    line            :: SQLite.Row,
-    diluent         :: Dict{Symbol, T},
-    temperature     :: T,
-    pressure        :: T,
-    mass            :: T,        
-    ν               :: AbstractRange,
-    ν_wing          :: T,
-    ν_wing_hw       :: T,
-    factor          :: T,
-    data            :: AbstractVector{T},
-    out_cache       :: AbstractVector{T};
+    line::SQLite.Row,
+    diluent::Dict{Symbol,T},
+    temperature::T,
+    pressure::T,
+    mass::T,        
+    ν::AbstractRange,
+    ν_wing::T,
+    ν_wing_hw::T,
+    factor::T,
+    data::AbstractVector{T},
+    out_cache::AbstractVector{T};
     kwargs...
 ) where T <: AbstractFloat 
     fields = kwargs[:fields]    
@@ -435,7 +435,7 @@ function voigt_lineshape(
     ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
     ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)  
 
-    voigt_profile!(out_cache, @view(ν[ind_lo:ind_hi]), ν_0, γ_D, γ_0)
+    voigt_profile!(out_cache, @view(ν[ind_lo:ind_hi]), ν_0 + Δ_0, γ_D, γ_0)
     for i = 1:(ind_hi - ind_lo + 1)
         data[ind_lo + i - 1] += factor * out_cache[i]
     end
@@ -450,7 +450,7 @@ function prepare_voigt_kwargs(;kwargs...)
     end     
 
     # prepare field names for diluents
-    fields = Dict{Symbol,Dict{Symbol,Union{Symbol, Missing}}}()
+    fields = Dict{Symbol,Dict{Symbol,Union{Symbol,Missing}}}()
     for diluent_name in keys(diluent)
         fields[diluent_name] = Dict(            
             :γ_0 => get_symbol(column_names, Symbol(@sprintf("gamma_%s", diluent_name))),
@@ -465,29 +465,123 @@ function prepare_voigt_kwargs(;kwargs...)
     )
 end
 
+speed_dependent_voigt_profile!(
+    out::AbstractVector{T},
+    ν::AbstractVector{T},
+    ν_0::T,    
+    γ_D::T,
+    γ_0::T,
+    γ_2::T,
+    Δ_0::T       
+ ) where T <: AbstractFloat = hartmann_tran_profile!(out, ν, ν_0, 0.0 + 0.0*im, γ_D, γ_0, γ_2, Δ_0, 0., 0.0 + 0.0*im)
+
+ function speed_dependent_voigt_lineshape(
+    line::SQLite.Row,
+    diluent::Dict{Symbol,T},
+    temperature::T,
+    pressure::T,
+    mass::T,        
+    ν::AbstractRange,
+    ν_wing::T,
+    ν_wing_hw::T,
+    factor::T,
+    data::AbstractVector{T},
+    out_cache::AbstractVector{T};
+    kwargs...
+) where T <: AbstractFloat 
+    fields = kwargs[:fields]    
+    # initialize lineshape specific parameters    
+    ν_0 = get_line_par(line, :nu)
+    γ_D = γ_Doppler(temperature, ν_0, mass)
+    γ_0 = Δ_0 = γ_2 = Float64(0.0)    
+
+    # loop over all diluents and build combined line parameters    
+    for (diluent_name, diluent_abundance) in diluent    
+        # get Voigt parameters if available        
+
+        # γ_0 contribution
+        γ_0_dil = get_line_par(line, fields[diluent_name][:γ_0])        
+        n_dil::Float64 = get_line_par(line, fields[diluent_name][:n])        
+        if (diluent_name == :self || n_dil == c_default_zero)
+            n_dil = get_line_par(line, :n_air)
+        end                
+        γ_0t = γ_collision_0(γ_0_dil, temperature, c_T_ref, pressure, 
+            c_p_ref, n_dil)
+        γ_0 += diluent_abundance * γ_0t
+
+        # Δ_0 contribution        
+        Δ_0_dil = get_line_par(line, fields[diluent_name][:Δ_0])
+        Δ_0p_dil = get_line_par(line, fields[diluent_name][:Δ_0p])                
+        Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
+        Δ_0 += diluent_abundance * Δ_0t    
+        
+        # γ_2 contribution
+        γ_2_dil = get_line_par(line, fields[diluent_name][:γ_2])
+        γ_2t = γ_2_dil * pressure / c_p_ref
+        γ_2 += diluent_abundance * γ_2t
+    end
+        
+    # use absolute or hw wing specification?
+    ν_wing_val::Float64 = max(ν_wing, ν_wing_hw * γ_0, ν_wing_hw * γ_D)
+
+    # find a suitable bisection for integrating the data into the vector
+    ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
+    ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)  
+
+    speed_dependent_voigt_profile!(out_cache, @view(ν[ind_lo:ind_hi]), ν_0, γ_D, γ_0, γ_2, Δ_0)
+    for i = 1:(ind_hi - ind_lo + 1)
+        data[ind_lo + i - 1] += factor * out_cache[i]
+    end
+end
+
+ function prepare_speed_dependent_voigt_kwargs(;kwargs...)        
+    diluent = get(kwargs, :diluent) do 
+        Dict()
+    end    
+    column_names = get(kwargs, :column_names) do
+        Dict()
+    end     
+
+    # prepare field names for diluents
+    fields = Dict{Symbol,Dict{Symbol,Union{Symbol,Missing}}}()
+    for diluent_name in keys(diluent)
+        fields[diluent_name] = Dict(            
+            :γ_0 => get_symbol(column_names, Symbol(@sprintf("gamma_%s", diluent_name))),
+            :n => get_symbol(column_names, Symbol(@sprintf("n_%s", diluent_name))),
+            :Δ_0 => get_symbol(column_names, Symbol(@sprintf("delta_%s", diluent_name))), 
+            :Δ_0p => get_symbol(column_names, Symbol(@sprintf("deltap_%s", diluent_name))),
+            :γ_2 => get_symbol(column_names, Symbol(@sprintf("sd_%s", diluent_name)))
+        )
+    end
+
+    return Dict(        
+        :fields => fields        
+    )
+end
+
 function lorentz_profile!(
     out::AbstractVector{T},
     ν::AbstractVector{T},
     ν_0::T,
     γ_0::T
 ) where T <: AbstractFloat     
-    for i=1:length(ν)
+    for i = 1:length(ν)
         out[i] = γ_0 / (π * (γ_0^2 + (ν[i] - ν_0)^2))
     end
 end
 
 function lorentz_lineshape(
-    line            :: SQLite.Row,
-    diluent         :: Dict{Symbol, T},
-    temperature     :: T,
-    pressure        :: T,
-    mass            :: T,        
-    ν               :: AbstractRange,
-    ν_wing          :: T,
-    ν_wing_hw       :: T,
-    factor          :: T,
-    data            :: AbstractVector{T},
-    out_cache       :: AbstractVector{T};
+    line::SQLite.Row,
+    diluent::Dict{Symbol,T},
+    temperature::T,
+    pressure::T,
+    mass::T,        
+    ν::AbstractRange,
+    ν_wing::T,
+    ν_wing_hw::T,
+    factor::T,
+    data::AbstractVector{T},
+    out_cache::AbstractVector{T};
     kwargs...
 ) where T <: AbstractFloat 
     fields = kwargs[:fields]    
@@ -533,23 +627,23 @@ function gauss_profile!(
     ν_0::T,
     γ_D::T    
 ) where T <: AbstractFloat
-    for i=1:length(ν)
+    for i = 1:length(ν)
         out[i] = √(log(2) / π) / γ_D * exp(-log(2) * ((ν[i] - ν_0) / γ_D)^2)  
     end
 end
 
 function gauss_lineshape(
-    line            :: SQLite.Row,
-    diluent         :: Dict{Symbol, T},
-    temperature     :: T,
-    pressure        :: T,
-    mass            :: T,        
-    ν               :: AbstractRange,
-    ν_wing          :: T,
-    ν_wing_hw       :: T,
-    factor          :: T,
-    data            :: AbstractVector{T},
-    out_cache       :: AbstractVector{T};
+    line::SQLite.Row,
+    diluent::Dict{Symbol,T},
+    temperature::T,
+    pressure::T,
+    mass::T,        
+    ν::AbstractRange,
+    ν_wing::T,
+    ν_wing_hw::T,
+    factor::T,
+    data::AbstractVector{T},
+    out_cache::AbstractVector{T};
     kwargs...
 ) where T <: AbstractFloat           
     # initialize lineshape specific parameters    
@@ -573,12 +667,14 @@ profile_map = Dict(
     :gauss => gauss_profile!,
     :lorentz => lorentz_profile!,
     :voigt => voigt_profile!,    
+    :sdvoigt => speed_dependent_voigt_profile!,    
     :hartmann_tran => hartmann_tran_profile!,        
 )
 
 lineshape_map = Dict(    
     :hartmann_tran => hartmann_tran_lineshape,    
     :voigt => voigt_lineshape,
+    :sdvoigt => speed_dependent_voigt_lineshape,
     :lorentz => lorentz_lineshape,
     :gauss => gauss_lineshape   
 )
@@ -586,6 +682,7 @@ lineshape_map = Dict(
 profile_preparation_map = Dict(
     :hartmann_tran => prepare_hartmann_tran_kwargs,
     :voigt => prepare_voigt_kwargs,
+    :sdvoigt => prepare_speed_dependent_voigt_kwargs,
     :lorentz => prepare_voigt_kwargs,    
 )
 
