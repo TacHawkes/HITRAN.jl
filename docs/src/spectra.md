@@ -15,7 +15,7 @@ to retrieve line-by-line data.
 There are two default environments defined at the moment, which ease the calculation of atmospheric spectra.
 
 ### Dry air
-The first environment is dry air which can be accessed using `default_environments[:dry_air]`. The following composition is used [^Picard2008]:
+The first environment is dry air which can be accessed using `default_environments[:dry_air]`. The following composition is used [^Picard2008]. Only HITRAN listed gases are used:
 
 [^Picard2008]: A., Picard, R.S., Davis, M., Gläser and K., Fujii (2008), Revised formula for the density of moist air (CIPM-2007), Metrologia 45, 149–155 (2008).
 
@@ -23,15 +23,11 @@ The first environment is dry air which can be accessed using `default_environmen
 | :---   |       ---: |
 | ``N_2`` |   780,848 |
 | ``O_2`` |   209,390 |
-| ``Ar`` |      9,332 |
 | ``CO_2`` |      400 |
-| ``Ne`` |       18.2 |
 | ``CH_4`` |       1.5 |
-| ``Kr``  |        1.1 |
 | ``H_2`` |        0.5 |
 | ``N_2O`` |       0.3 |
 | ``CO``  |        0.2 |
-| ``Xe``  |        0.1 |
 
 
 ### Moist air
