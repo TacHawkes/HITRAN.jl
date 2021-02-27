@@ -182,7 +182,7 @@ end
 
 Computes the absorption coefficient using line-by-line data stored in the
 database tables specified in `tables`. The lineshape can be optionally specified
-using the `profile` argument and one of the Symbol keys `:hartmann_tran`, `:voigt`,
+using the `profile` argument and one of the Symbol keys `:hartmann_tran`, `:voigt`, `:sdvoigt`,
 `:lorentz`, `:gauss`. If no keyword arguments are specified, they will be automatically
 chosen from the tables provided.
 

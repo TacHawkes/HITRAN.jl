@@ -63,7 +63,7 @@ wavenumbers, absorption_coefficient = α(
 The `default_environment` variable is a `Dict` containing standard mixtures. For now this is only dry air by using the key `:dry_air`.
 See [Environments](@ref) for details for the environments.
 
-!!! warning Diluent parameter
+!!! warning "Diluent parameter"
     The diluent parameter behaves a little bit differently for HITRAN.jl 0.1.1 and greater and differs from HAPI.
     The problem with the HAPI diluent specification is that the diluent `:self` will apply to ALL gases in a mixture and is therefore
     wrong by design. To fix this, HITRAN.jl can actually work out the diluent itself given a gas mixture. The `self` portion will be
@@ -97,13 +97,31 @@ transmission = transmittance_spectrum(absorption_coefficient, 100e2);
 
 Let's put everything so far together and create a plot:
 
-```@example
+```julia
 using HITRAN, Plots
 
 fetch!("StdAtm", iso_id(["N2", "O2", "CO2", "H2O", "CH4"]), 12900, 13200, [:standard, :ht_self]);
 wavenumbers, absorption_coefficient = α(["StdAtm"];
-        components=(default_environments[:dry_air]),        
-        diluent=Dict(:self => 0.209390, :air => 1 - 0.209390)        
+        components=default_environments[:dry_air]        
+    )
+transmission = transmittance_spectrum(absorption_coefficient, 100e2)
+
+plot(
+    wavenumbers,
+    transmission, 
+    xlabel="Wavenumbers [1/cm]", 
+    ylabel="Transmission", 
+    title="Transmission along a 100 m air column",
+    leg=false
+)
+```
+
+```@eval
+using HITRAN, Plots
+
+fetch!("StdAtm", iso_id(["N2", "O2", "CO2", "H2O", "CH4"]), 12900, 13200, [:standard, :ht_self]);
+wavenumbers, absorption_coefficient = α(["StdAtm"];
+        components=default_environments[:dry_air]        
     )
 transmission = transmittance_spectrum(absorption_coefficient, 100e2)
 
