@@ -26,12 +26,12 @@ The first environment is dry air which can be accessed using `default_environmen
 | ``Ar`` |      9,332 |
 | ``CO_2`` |      400 |
 | ``Ne`` |       18.2 |
-| ``CH_4` |       1.5 |
-| ``Kr`  |        1.1 |
-| ``H_2` |        0.5 |
-| ``N_2O` |       0.3 |
-| ``CO`  |        0.2 |
-| ``Xe`  |        0.1 |
+| ``CH_4`` |       1.5 |
+| ``Kr``  |        1.1 |
+| ``H_2`` |        0.5 |
+| ``N_2O`` |       0.3 |
+| ``CO``  |        0.2 |
+| ``Xe``  |        0.1 |
 
 
 ### Moist air
@@ -41,7 +41,7 @@ You can use the function `moist_air` to get a
 composition dictionary with the correct water concentration.
 
 ```@docs
-    moist_air(humidity, pressure=c_p_ref, temp=c_T_ref)
+    moist_air(humidity [, pressure=c_p_ref, temp=c_T_ref])
 ```
 
 ## Convenience functions
