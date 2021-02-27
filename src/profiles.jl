@@ -61,6 +61,87 @@ function get_components(comps::Dict{Tuple{T,T},V}) where T <: Integer where V <:
     return comps, natural_abundances
 end
 
+function get_diluents(diluent::Dict{Symbol, T}, components) where T <: Number
+    if length(components) > 1
+        throw(ErrorException(
+            "For gas mixtures a diluent entry for every component has to be supplied"
+            ))
+    end
+
+    if (0 <= sum(values(diluent)) <= 1) == false
+        throw(ErrorException(
+            "Sum of diluent fractions must not exceed 1 or lie below zero"
+            ))    
+   end
+
+    # convert do different dict format
+    return Dict(
+        first(keys(components)) => diluent
+    )
+end
+
+function get_diluents(diluent::Dict{Tuple{T, T}, Dict{Symbol, V}}, components) where T <: Integer where V <: Number
+    if length(diluent) > length(components)
+        throw(ErrorException("More diluents than components specified."))
+    end
+
+    diluents = Dict()
+
+    # water abundance
+    has_water = false
+    water_abundance = 0.0    
+    if 1 in getindex.(keys(components), 1)
+        has_water = true
+
+        for (k,v) in components
+            if k[1] == 1
+                water_abundance += v
+            end
+        end
+    end    
+
+    for (mi_tuple, abundance) in components
+        if mi_tuple ∈ keys(diluent)
+            # insert provided values
+            diluents[mi_tuple] = diluent[mi_tuple]
+        else
+            # default values and handle H2O            
+            if has_water
+                diluents[mi_tuple] = Dict(
+                    :self => abundance - water_abundance,
+                    :air => 1 - abundance - water_abundance,
+                    :H2O => water_abundance
+                )
+            else                
+                diluents[mi_tuple] = Dict(
+                    :self => abundance,
+                    :air => 1 - abundance
+                )
+            end
+        end
+
+        if (0 <= sum(values(diluents[mi_tuple])) <= 1) == false
+            throw(ErrorException(
+            "Sum of diluent fractions must not exceed 1 or lie below zero"
+            ))
+        end
+    end
+
+    return diluents
+end
+
+function get_diluent_names(diluent)
+    # get all diluent names
+    names = []
+    for (comp_mi, dil) in diluent
+        for k in keys(dil)
+            push!(names, k)
+        end
+    end
+
+    return names
+end
+
 function parse_kwargs(tables;kwargs...)    
     intensity_threshold = get(kwargs, :intensity_threshold, -Inf)
     pressure = convert(Float64, get(kwargs, :pressure, c_p_ref))
@@ -82,14 +163,15 @@ function parse_kwargs(tables;kwargs...)
     ν_max = ν_range[2]
     ν_step = get(kwargs, :ν_step, 0.01)
     ν_wing = get(kwargs, :ν_wing, 0.)
-    ν_wing_hw = get(kwargs, :ν_wing_hw, 50.)
-
-    diluent = get(kwargs, :diluent) do 
-        Dict{Symbol,Float64}(:self => 1.)
-    end 
-    !all(0 .<= values(diluent) .<= 1) && error("Diluent must not exceed 0 or 1 for individual fractions")    
+    ν_wing_hw = get(kwargs, :ν_wing_hw, 50.)    
 
     components, natural_abundances = get_components(get(kwargs, :components, tables))        
+    diluent = get(kwargs, :diluent, nothing)
+    if isnothing(diluent)
+        diluent = get_diluents(Dict((0,0) => Dict(:self => 1.0)), components)
+    else
+        diluent = get_diluents(diluent, components)
+    end    
 
     return intensity_threshold, pressure, temperature, ν_range, 
         ν_min, ν_max, ν_step, ν_wing, ν_wing_hw, diluent, components, natural_abundances
@@ -115,7 +197,7 @@ chosen from the tables provided.
 - `ν_step`: the wavenumber step in ``cm^{-1}`` (default: 0.01 ``cm^{-1}``)
 - `ν_wing`: absolute calculation width of a line in ``cm^{-1}`` (default: 0 ``cm^{-1}``)
 - `ν_wing_hw`: relative calculation width of a line in multiples of a half-width (default: 50)
-- `diluent`: a `Dict` of the diluting substances, specified as `Symbol`, e.g. `:air` or `:H2O` for the key and the relative concentration as key (default: `Dict(:self => 1.0)`)
+- `diluent`: a `Dict` of the diluting substances, specified as `Symbol`, e.g. `:air` or `:H2O` for the key and the relative concentration as key (default: `Dict(:self => 1.0)`). See the example for details.
 """
 function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)        
     # parse and prepare input arguments
@@ -179,7 +261,7 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
             
             # call lineshape function
             lineshape_map[profile](line,
-                diluent,
+                diluent[(line.molec_id, line.local_iso_id)],
                 temperature,
                 pressure,
                 molar_masses[(line.molec_id, line.local_iso_id)],
@@ -198,7 +280,7 @@ end
 
 function hartmann_tran_reference_temperature(T)::Float64
     for (T_range, T_ref) in c_HT_T_ref
-        if T > T_range[1] && T < T_range[2]
+        if T >= T_range[1] && T < T_range[2]
             return T_ref
         end
     end
@@ -260,17 +342,17 @@ get_line_par(line::SQLite.Row, key::Missing)::Float64 = c_default_zero
 get_line_par(line::SQLite.Row, key::Missing, fallback_key::Missing)::Float64 = c_default_zero
 
 function hartmann_tran_lineshape(
-    line::SQLite.Row,
-    diluent::Dict{Symbol,T},
-    temperature::T,
-    pressure::T,
-    mass::T,        
-    ν::AbstractRange,
-    ν_wing::T,
-    ν_wing_hw::T,
-    factor::T,
-    data::AbstractVector{T},
-    out_cache::AbstractVector{T};
+    line            :: SQLite.Row,
+    diluent         :: Dict{Symbol,T},
+    temperature     :: T,
+    pressure        :: T,
+    mass            :: T,        
+    ν               :: AbstractRange,
+    ν_wing          :: T,
+    ν_wing_hw       :: T,
+    factor          :: T,
+    data            :: AbstractVector{T},
+    out_cache       :: AbstractVector{T};
     kwargs...
 ) where T <: AbstractFloat
     T_ref_HT = get(kwargs, :T_ref_HT, c_T_ref)
@@ -358,7 +440,9 @@ function prepare_hartmann_tran_kwargs(;kwargs...)
 
     # prepare field names for diluents
     fields = Dict{Symbol,Dict{Symbol,Union{Symbol,Missing}}}()
-    for diluent_name in keys(diluent)        
+
+    # get all diluent names    
+    for diluent_name in get_diluent_names(diluent)
         fields[diluent_name] = Dict(
             :γ_0 => get_symbol(column_names, Symbol(@sprintf("gamma_HT_0_%s_%d", diluent_name, T_ht)), Symbol(@sprintf("gamma_%s", diluent_name))),
             :n => get_symbol(column_names, Symbol(@sprintf("n_HT_0_%s_%d", diluent_name, T_ht)), Symbol(@sprintf("n_%s", diluent_name))),            
@@ -388,17 +472,17 @@ voigt_profile!(
 ) where T <: AbstractFloat = hartmann_tran_profile!(out, ν, ν_0, 0. + im * 0., γ_D, γ_0, 0., 0., 0., 0. + im * 0.)
 
 function voigt_lineshape(
-    line::SQLite.Row,
-    diluent::Dict{Symbol,T},
-    temperature::T,
-    pressure::T,
-    mass::T,        
-    ν::AbstractRange,
-    ν_wing::T,
-    ν_wing_hw::T,
-    factor::T,
-    data::AbstractVector{T},
-    out_cache::AbstractVector{T};
+    line            :: SQLite.Row,
+    diluent         :: Dict{Symbol,T},
+    temperature     :: T,
+    pressure        :: T,
+    mass            :: T,        
+    ν               :: AbstractRange,
+    ν_wing          :: T,
+    ν_wing_hw       :: T,
+    factor          :: T,
+    data            :: AbstractVector{T},
+    out_cache       :: AbstractVector{T};
     kwargs...
 ) where T <: AbstractFloat 
     fields = kwargs[:fields]    
@@ -451,7 +535,7 @@ function prepare_voigt_kwargs(;kwargs...)
 
     # prepare field names for diluents
     fields = Dict{Symbol,Dict{Symbol,Union{Symbol,Missing}}}()
-    for diluent_name in keys(diluent)
+    for diluent_name in get_diluent_names(diluent)
         fields[diluent_name] = Dict(            
             :γ_0 => get_symbol(column_names, Symbol(@sprintf("gamma_%s", diluent_name))),
             :n => get_symbol(column_names, Symbol(@sprintf("n_%s", diluent_name))),
@@ -476,17 +560,17 @@ speed_dependent_voigt_profile!(
  ) where T <: AbstractFloat = hartmann_tran_profile!(out, ν, ν_0, 0.0 + 0.0*im, γ_D, γ_0, γ_2, Δ_0, 0., 0.0 + 0.0*im)
 
  function speed_dependent_voigt_lineshape(
-    line::SQLite.Row,
-    diluent::Dict{Symbol,T},
-    temperature::T,
-    pressure::T,
-    mass::T,        
-    ν::AbstractRange,
-    ν_wing::T,
-    ν_wing_hw::T,
-    factor::T,
-    data::AbstractVector{T},
-    out_cache::AbstractVector{T};
+    line            :: SQLite.Row,
+    diluent         :: Dict{Symbol,T},
+    temperature     :: T,
+    pressure        :: T,
+    mass            :: T,        
+    ν               :: AbstractRange,
+    ν_wing          :: T,
+    ν_wing_hw       :: T,
+    factor          :: T,
+    data            :: AbstractVector{T},
+    out_cache       :: AbstractVector{T};
     kwargs...
 ) where T <: AbstractFloat 
     fields = kwargs[:fields]    
@@ -544,7 +628,7 @@ end
 
     # prepare field names for diluents
     fields = Dict{Symbol,Dict{Symbol,Union{Symbol,Missing}}}()
-    for diluent_name in keys(diluent)
+    for diluent_name in get_diluent_names(diluent)
         fields[diluent_name] = Dict(            
             :γ_0 => get_symbol(column_names, Symbol(@sprintf("gamma_%s", diluent_name))),
             :n => get_symbol(column_names, Symbol(@sprintf("n_%s", diluent_name))),
@@ -571,17 +655,17 @@ function lorentz_profile!(
 end
 
 function lorentz_lineshape(
-    line::SQLite.Row,
-    diluent::Dict{Symbol,T},
-    temperature::T,
-    pressure::T,
-    mass::T,        
-    ν::AbstractRange,
-    ν_wing::T,
-    ν_wing_hw::T,
-    factor::T,
-    data::AbstractVector{T},
-    out_cache::AbstractVector{T};
+    line            :: SQLite.Row,
+    diluent         :: Dict{Symbol,T},
+    temperature     :: T,
+    pressure        :: T,
+    mass            :: T,        
+    ν               :: AbstractRange,
+    ν_wing          :: T,
+    ν_wing_hw       :: T,
+    factor          :: T,
+    data            :: AbstractVector{T},
+    out_cache       :: AbstractVector{T};
     kwargs...
 ) where T <: AbstractFloat 
     fields = kwargs[:fields]    
@@ -633,17 +717,17 @@ function gauss_profile!(
 end
 
 function gauss_lineshape(
-    line::SQLite.Row,
-    diluent::Dict{Symbol,T},
-    temperature::T,
-    pressure::T,
-    mass::T,        
-    ν::AbstractRange,
-    ν_wing::T,
-    ν_wing_hw::T,
-    factor::T,
-    data::AbstractVector{T},
-    out_cache::AbstractVector{T};
+    line            :: SQLite.Row,
+    diluent         :: Dict{Symbol,T},
+    temperature     :: T,
+    pressure        :: T,
+    mass            :: T,        
+    ν               :: AbstractRange,
+    ν_wing          :: T,
+    ν_wing_hw       :: T,
+    factor          :: T,
+    data            :: AbstractVector{T},
+    out_cache       :: AbstractVector{T};
     kwargs...
 ) where T <: AbstractFloat           
     # initialize lineshape specific parameters    

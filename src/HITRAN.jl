@@ -23,6 +23,7 @@ export  current_db,
         tips,
         α,
         default_environments,
+        moist_air,
         absorption_spectrum,
         transmittance_spectrum,
         optical_depth

@@ -61,10 +61,18 @@ wavenumbers, absorption_coefficient = α(
 ```
 
 The `default_environment` variable is a `Dict` containing standard mixtures. For now this is only dry air by using the key `:dry_air`.
-Great, what is left? Actually to match the behaviour of the HAPI, we also have to specify how our species is diluted by the environment.
+See [Environments](@ref) for details for the environments.
 
-!!! warning "Calculate diluted mixtures separately and sum them afterwards"
-    The following diluent specification is actually wrong for the H2O lines overlapping the A-band spectral region. Because they are to weak, we get away with this here. If you are in a spectral band where you have to properly adjust for the self-/air-broadening, you should calculate the spectra for each component one by one and add them later. Specifying a `:self` dilution applies to **all** specified components.
+!!! warning Diluent parameter
+    The diluent parameter behaves a little bit differently for HITRAN.jl 0.1.1 and greater and differs from HAPI.
+    The problem with the HAPI diluent specification is that the diluent `:self` will apply to ALL gases in a mixture and is therefore
+    wrong by design. To fix this, HITRAN.jl can actually work out the diluent itself given a gas mixture. The `self` portion will be
+    set to abundance specified in components and the `air` portion is attributed to the remaining fraction. If H2O is part of the mixture
+    the `H2O` diluent will be set accordingly and the influence of water on the collisional broadening will be taken into account (if the necessary data is supplied by the HITRAN database).
+    
+    The behaviour of the diluent parameter matches the HAPI behaviour for a single component specification. If you want to calculate
+    a gas mixture, you have to provide a `Dict` with the molecule/local isotopologue id as key and another `Dict`as value containing the diluent
+    as usual. It is possible to provide only diluent information for some components, the module will work out the other diluents automatically.
 
 
 ### The final code
@@ -73,8 +81,7 @@ To sum it all up, the correct code (besides the warning above) for this example 
 
 ```@repl o2_demo
 wavenumbers, absorption_coefficient = α(["StdAtm"];
-        components=(default_environments[:dry_air]),        
-        diluent=Dict(:self => 0.209390, :air => 1 - 0.209390)        
+        components=(default_environments[:dry_air])                
     )
 ```
 

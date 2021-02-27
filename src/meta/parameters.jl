@@ -17,6 +17,10 @@ parameter_groups = Dict(
     :voigt_h2o => ["gamma_H2O","n_H2O"],
     :voigt_linemixing => ["y_air","y_self"],
 
+    :sdvoigt_air => ["gamma_air","delta_air","deltap_air","n_air", "SD_air"],
+    :sdvoigt_self => ["gamma_self","delta_self","deltap_self","n_self", "SD_self"],    
+    :sdvoigt_linemixing => ["Y_SDV_air_296","Y_SDV_self_296"],
+
     :ht_self => ["gamma_HT_0_self_50","n_HT_self_50","gamma_HT_2_self_50",
                 "delta_HT_0_self_50","deltap_HT_self_50","delta_HT_2_self_50",
                 "gamma_HT_0_self_150","n_HT_self_150","gamma_HT_2_self_150",
@@ -32,6 +36,7 @@ parameter_groups = Dict(
 
 )
 parameter_groups[:voigt_all] = merge_groups(:voigt_air, :voigt_self, :voigt_h2, :voigt_co2, :voigt_he, :voigt_h2o, :voigt_linemixing)
+parameter_groups[:sdvoigt_all] = merge_groups(:sdvoigt_air, :sdvoigt_self, :sdvoigt_linemixing)
 parameter_groups[:ht_all] = merge_groups(:ht_self, :ht_air)
 
-parameter_groups[:all] = merge_groups(:standard, :labels, :voigt_all, :ht_all)
+parameter_groups[:all] = merge_groups(:standard, :labels, :voigt_all, :sdvoigt_all, :ht_all)
