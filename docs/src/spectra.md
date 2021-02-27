@@ -17,7 +17,7 @@ There are two default environments defined at the moment, which ease the calcula
 ### Dry air
 The first environment is dry air which can be accessed using `default_environments[:dry_air]`. The following composition is used [^Picard2008]:
 
-[^Picard2008]: A., Picard, R.S., Davis, M., Gläser and K., Fujii (2008), Revised formula for the density of moist air (CIPM-2007), Metrologia 45, 149–155 (2008). [Link to article](doi:10.1088/0026-1394/45/2/004)
+[^Picard2008]: A., Picard, R.S., Davis, M., Gläser and K., Fujii (2008), Revised formula for the density of moist air (CIPM-2007), Metrologia 45, 149–155 (2008).
 
 | Gas | Volume (ppmv) |
 | :---   |       ---: |
@@ -41,7 +41,7 @@ You can use the function `moist_air` to get a
 composition dictionary with the correct water concentration.
 
 ```@docs
-    moist_air(humidity [, pressure=c_p_ref, temp=c_T_ref])
+    moist_air
 ```
 
 ## Convenience functions
