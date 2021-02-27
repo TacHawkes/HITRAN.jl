@@ -1,4 +1,4 @@
-# Functions for absorption spectrum calculcation
+# Functions for absorption spectrum calculation
 
 The most important function of the module is the [`α`](@ref) function.
 Before using i, you have to initialise a database and use the [`fetch!`](@ref) function
