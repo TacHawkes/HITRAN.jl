@@ -1,3 +1,4 @@
+# I guess technically this is type piracy but it seems reasonable to do it here...
 Base.haskey(line::SQLite.Row, key::Missing) = false 
 
 Sij_T(S_ij_ref, T, T_ref, Q_T, Q_T_ref, e_lower, ν_ij)::Float64 = S_ij_ref * Q_T_ref / Q_T * exp(-c_c2 * e_lower / T) * (1 - exp(-c_c2 * ν_ij / T)) / exp(-c_c2 * e_lower / T_ref) * (1 - exp(-c_c2 * ν_ij / T_ref))
@@ -74,7 +75,7 @@ function get_diluents(diluent::Dict{Symbol, T}, components) where T <: Number
             ))    
    end
 
-    # convert do different dict format
+    # convert to different dict format
     return Dict(
         first(keys(components)) => diluent
     )

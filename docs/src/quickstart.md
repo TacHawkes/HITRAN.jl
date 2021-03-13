@@ -26,7 +26,7 @@ using HITRAN, Plots
 fetch!("StdAtm", iso_id(["N2", "O2", "CO2", "H2O", "CH4"]), 12900, 13200, [:standard, :ht_self]);
 ```
 
-Not this command needs some explanation. First of all it is named `fetch!`with exclamation mark because it modifies the underlying database and is therefore considered "mutating". The parameters are the following:
+Now this command needs some explanation. First of all it is named `fetch!`with exclamation mark because it modifies the underlying database and is therefore considered "mutating". The parameters are the following:
 
 | parameter | description |      example value |
 | :---   |    :---:    |       ---: |

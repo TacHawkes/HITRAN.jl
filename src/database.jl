@@ -157,27 +157,29 @@ Returns the global isotopologue IDs for the given molecule ids and local ids pro
 - `M`: molecule id or array of ids
 - `I`: local isotopologue id or array of ids
 """
-function iso_id(db::SQLite.DB, M::T, I::T) where T <: Union{Integer, AbstractVector{Integer}}
+function iso_id(db::SQLite.DB, M, I)
+    MI = zip(M, I)
+    sql =   "SELECT     global_id 
+            FROM        isotopologues 
+            WHERE 	    (molecule_id, local_id)
+            IN          (VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in MI], ',') * ")"      
     res = DBInterface.execute(db, 
-        "SELECT     global_id 
-        FROM        isotopologues 
-        WHERE       molecule_id IN (" * join(M, ',') * ")
-        AND         local_id IN (" * join(I, ',') * ")") |> DataFrame
-
+        sql,
+        [i for t in MI for i in t]) |> DataFrame    
     if (size(res)[1] == 0)
         return missing
     else 
         return res[:, :global_id]
     end
 end
-iso_id(M::T, I::T) where T <: Union{Integer, AbstractVector{Integer}} = iso_id(current_db(), M, I)
+iso_id(M, I) = iso_id(current_db(), M, I)
 
 """
     iso_id([db::SQLite.DB,] formulas::T) where T <: Union{String, AbstractVector{String}}
 
 Returns the global isotopologue IDs for the given molecule or isotopologue formulas.
 """
-function iso_id(db::SQLite.DB, formulas::T) where T <: Union{String, AbstractVector{String}}
+function iso_id(db::SQLite.DB, formulas)
     search_str = SQLite.esc_id(formulas)
 
     # get globals ids
@@ -195,15 +197,15 @@ function iso_id(db::SQLite.DB, formulas::T) where T <: Union{String, AbstractVec
         return res[:, :global_id]
     end
 end
-iso_id(formulas::T) where T <: Union{String, AbstractVector{String}} = iso_id(current_db(), formulas)
+iso_id(formulas) = iso_id(current_db(), formulas)
 
-function isotopologue(db::SQLite.DB, global_id::Integer)    
+function isotopologue(db::SQLite.DB, global_id)    
     DBInterface.execute(db, 
         "SELECT     * 
         FROM        isotopologues
         WHERE       global_id = ?", [global_id]) |> DataFrame
 end
-isotopologue(global_id::Integer) = isotopologue(current_db(), global_id)
+isotopologue(global_id) = isotopologue(current_db(), global_id)
 
 query_local_db(db::SQLite.DB, sql::AbstractString, params=()) = DBInterface.execute(db, sql, params)
 query_local_db(sql::AbstractString, params=()) = query_local_db(current_db(), sql, params)

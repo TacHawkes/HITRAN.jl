@@ -1,3 +1,5 @@
+__precompile__()
+
 module HITRAN
 
 using Printf, CSV, Downloads, SQLite, FileIO, JLD2,
