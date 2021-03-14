@@ -1,5 +1,8 @@
-# I guess technically this is type piracy but it seems reasonable to do it here...
-Base.haskey(line::SQLite.Row, key::Missing) = false 
+# Type piracy free as of 0.1.3 to add the false return if key is 'missing'
+# This definition of haskey only lives in the HITRAN module and does not monkey-patch
+# Base.haskey anymore
+haskey(collection, key) = Base.haskey(collection, key)
+haskey(line::SQLite.Row, key::Missing) = false
 
 Sij_T(S_ij_ref, T, T_ref, Q_T, Q_T_ref, e_lower, ν_ij)::Float64 = S_ij_ref * Q_T_ref / Q_T * exp(-c_c2 * e_lower / T) * (1 - exp(-c_c2 * ν_ij / T)) / exp(-c_c2 * e_lower / T_ref) * (1 - exp(-c_c2 * ν_ij / T_ref))
 
