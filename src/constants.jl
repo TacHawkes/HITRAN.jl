@@ -42,7 +42,7 @@ const c_h_SI = 6.62607015e-34
 const c_c2 = 1e2*c_h_SI * c_c_SI / c_kB_SI
 
 ### profile constants
-const c_default_zero = 0.0
+const c_default_zero = zero(Float64)
 
 #=
 Constants for saturation water vapor pressure taken from:

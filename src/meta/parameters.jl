@@ -3,7 +3,7 @@ function merge_groups(g::Symbol...)
 end
 
 # initialize parameter groups with all basic sets and then add combined ones
-parameter_groups = Dict(
+const parameter_groups = Dict(
     :standard => ["molec_id", "local_iso_id", "nu", "sw", "a", "elower", "gamma_air",
                 "delta_air","gamma_self","n_air","n_self","gp","gpp"],
 

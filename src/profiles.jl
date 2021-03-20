@@ -163,8 +163,7 @@ function parse_kwargs(tables;kwargs...)
         result = first(query_local_db(sql))
         ν_range = (result.min_nu, result.max_nu)
     end
-    ν_min = ν_range[1]
-    ν_max = ν_range[2]
+    ν_min, ν_max = ν_range    
     ν_step = get(kwargs, :ν_step, 0.01)
     ν_wing = get(kwargs, :ν_wing, 0.)
     ν_wing_hw = get(kwargs, :ν_wing_hw, 50.)    
@@ -309,16 +308,16 @@ function hartmann_tran_profile!(
     ν_a0 = c_c_SI * γ_D / (√(log(2)) * ν_0)
         
     if (abs(C_2t) ≈ 0.)                
-        for i = 1:length(ν)
+        Threads.@threads for i = 1:length(ν)
             Z_m = (im * (ν_0 - ν[i]) + C_0t) / (ν_0 * ν_a0 / c_c_SI)
             wofz_Z_m = wofz(im * Z_m)      
             A_ν = √(π) * c_c_SI / ν_0 / ν_a0 * wofz_Z_m       
             B_ν = √(π) * c_c_SI * ν_a0 / ν_0 * ((1 - Z_m^2) * wofz_Z_m + Z_m / √(π))
-            out[i] = 1 / π * real(A_ν / (1 - (ν_VC - η * (C_0 - 3C_2 / 2) * A_ν + (η * C_2 / ν_a0^2) * B_ν)))
+            @inbounds out[i] = 1 / π * real(A_ν / (1 - (ν_VC - η * (C_0 - 3C_2 / 2) * A_ν + (η * C_2 / ν_a0^2) * B_ν)))
         end        
     else
         Y = (ν_0 * ν_a0 / 2 / c_c_SI / C_2t)^2
-        for i = 1:length(ν)
+        Threads.@threads for i = 1:length(ν)
             X = (im * (ν_0 - ν[i]) + C_0t) / C_2t        
             Z_p = √(X + Y) + √(Y) 
             Z_m = √(X + Y) - √(Y)
@@ -328,22 +327,35 @@ function hartmann_tran_profile!(
 
             A_ν = √(π) * c_c_SI / ν_0 / ν_a0 * (wofz_Z_m - wofz_Z_p)
             B_ν = ν_a0^2 / C_2t^2 * (-1 + √(π) / 2 / √(Y) * (1 - Z_m^2) * wofz_Z_m - √(π) / 2 / √(Y) * (1 - Z_p^2) * wofz_Z_p)        
-            out[i] = 1 / π * real(A_ν / (1 - (ν_VC - η * (C_0 - 3C_2 / 2) * A_ν + (η * C_2 / ν_a0^2) * B_ν)))
+            @inbounds out[i] = 1 / π * real(A_ν / (1 - (ν_VC - η * (C_0 - 3C_2 / 2) * A_ν + (η * C_2 / ν_a0^2) * B_ν)))
         end
     end
 end
 
-# Solving the line parameter resolving using multiple dispatch
-get_line_value(value::AbstractFloat, ::Type{T}=Float64) where T = convert(T, value)
-get_line_value(value::AbstractFloat, fallback_value::AbstractFloat, ::Type{T}=Float64) where T = convert(T, value)
-get_line_value(value::AbstractString, ::Type{T}=Float64) where T = c_default_zero
-get_line_value(value::AbstractString, fallback_value::AbstractFloat, ::Type{T}=Float64) where T = convert(T, fallback_value)
-get_line_value(value::AbstractString, fallback_value::AbstractString, ::Type{T}=Float64) where T = c_default_zero
-get_line_par(line::SQLite.Row, key::Symbol, ::Type{T}=Float64) where T = get_line_value(line[key], T)
-get_line_par(line::SQLite.Row, key::Symbol, fallback_key::Symbol, ::Type{T}=Float64) where T = get_line_value(line[key], line[fallback_key], T)
-get_line_par(line::SQLite.Row, key::Symbol, fallback_key::Missing, ::Type{T}=Float64) where T = get_line_par(line, key, T)
-get_line_par(line::SQLite.Row, key::Missing)::Float64 = c_default_zero
-get_line_par(line::SQLite.Row, key::Missing, fallback_key::Missing)::Float64 = c_default_zero
+function get_line_par(line::SQLite.Row, key::Symbol, ::Type{T}=Float64) where T
+    q = SQLite.getquery(line)    
+    ind = q.lookup[key]
+    if q.types[ind] <: Union{Missing, T}
+        SQLite.getvalue(q, ind, T)
+    else
+        zero(T)
+    end  
+end
+
+function get_line_par(line::SQLite.Row, key::Symbol, fallback_key::Symbol, ::Type{T}=Float64) where T 
+    q = SQLite.getquery(line)    
+    ind = q.lookup[key]
+    if q.types[ind] <: Union{Missing, T}
+        SQLite.getvalue(q, ind, T)
+    elseif q.types[q.lookup[fallback_key]] <: Union{Missing, T}
+        SQLite.getvalue(q, q.lookup[fallback_key], T)
+    else
+        zero(T)
+    end    
+end
+get_line_par(line::SQLite.Row, key::Symbol, ::Missing, ::Type{T}=Float64) where T = get_line_par(line, key, T)
+get_line_par(::SQLite.Row, ::Missing)::Float64 = c_default_zero
+get_line_par(::SQLite.Row, ::Missing, ::Missing)::Float64 = c_default_zero
 
 function hartmann_tran_lineshape(
     line            :: SQLite.Row,
@@ -364,9 +376,9 @@ function hartmann_tran_lineshape(
     voigt_fields = kwargs[:voigt_fields]
     ν_0 = get_line_par(line, :nu)
     γ_D = γ_Doppler(temperature, ν_0, mass)    
-    γ_0 = γ_2 = Δ_0 = Δ_2 = Float64(0.0)
-    ν_VC = ComplexF64(0)
-    η = ComplexF64(0)
+    γ_0 = γ_2 = Δ_0 = Δ_2 = zero(Float64)
+    ν_VC = zero(ComplexF64)
+    η = zero(ComplexF64)
 
     # loop over all diluents and build combined line parameters
     for (diluent_name, diluent_abundance) in diluent    
@@ -374,7 +386,7 @@ function hartmann_tran_lineshape(
 
         # γ_0 contribution
         γ_0_dil = get_line_par(line, fields[diluent_name][:γ_0], voigt_fields[diluent_name][:γ_0])
-        n_dil::Float64 = get_line_par(line, fields[diluent_name][:n], voigt_fields[diluent_name][:n])        
+        n_dil = get_line_par(line, fields[diluent_name][:n], voigt_fields[diluent_name][:n])        
         if (diluent_name == :self || n_dil == c_default_zero)
             n_dil = get_line_par(line, :n_air)
         end        
@@ -417,13 +429,13 @@ function hartmann_tran_lineshape(
 
     ν_VC += η * (γ_0 - im * Δ_0)    
     # use absolute or hw wing specification?
-    ν_wing_val::Float64 = max(ν_wing, ν_wing_hw * γ_0, ν_wing_hw * γ_D)
+    ν_wing_val = max(ν_wing, ν_wing_hw * γ_0, ν_wing_hw * γ_D)
 
     # find a suitable bisection for integrating the data into the vector
     ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
     ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)    
     
-    hartmann_tran_profile!(out_cache, @view(ν[ind_lo:ind_hi]), ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, η)    
+    hartmann_tran_profile!(out_cache, @view(ν[ind_lo:ind_hi]), ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, η)
     for i = 1:(ind_hi - ind_lo + 1)
         data[ind_lo + i - 1] += factor * out_cache[i]
     end    
@@ -751,7 +763,7 @@ function gauss_lineshape(
     end
 end
 
-profile_map = Dict(
+const profile_map = Dict(
     :gauss => gauss_profile!,
     :lorentz => lorentz_profile!,
     :voigt => voigt_profile!,    
@@ -759,7 +771,7 @@ profile_map = Dict(
     :hartmann_tran => hartmann_tran_profile!,        
 )
 
-lineshape_map = Dict(    
+const lineshape_map = Dict(    
     :hartmann_tran => hartmann_tran_lineshape,    
     :voigt => voigt_lineshape,
     :sdvoigt => speed_dependent_voigt_lineshape,
@@ -767,7 +779,7 @@ lineshape_map = Dict(
     :gauss => gauss_lineshape   
 )
 
-profile_preparation_map = Dict(
+const profile_preparation_map = Dict(
     :hartmann_tran => prepare_hartmann_tran_kwargs,
     :voigt => prepare_voigt_kwargs,
     :sdvoigt => prepare_speed_dependent_voigt_kwargs,
