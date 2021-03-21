@@ -3,7 +3,7 @@ __precompile__()
 module HITRAN
 
 using Printf, CSV, Downloads, SQLite, FileIO, JLD2,
-     Interpolations, SpecialFunctions, SHA, Tables
+     Interpolations, SpecialFunctions, SHA
 
 const module_path = dirname(pathof(HITRAN))
 
