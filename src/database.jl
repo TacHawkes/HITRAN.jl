@@ -1,4 +1,3 @@
-using SHA
 
 mutable struct CurrentDatabase
     cur_db::Union{SQLite.DB, Nothing}
@@ -264,7 +263,7 @@ function download_HITRAN(
         end
     end=#
 
-    df = CSV.File(tmp_file; header=parameters)    
+    df = CSV.File(tmp_file; header=parameters, missingstring="#")    
 
     return df
 end

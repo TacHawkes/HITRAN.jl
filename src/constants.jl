@@ -41,6 +41,9 @@ const c_h_SI = 6.62607015e-34
 # c2 = hc/k (cgs units)
 const c_c2 = 1e2*c_h_SI * c_c_SI / c_kB_SI
 
+# natural log of 2
+const c_log2 = log(2)
+
 ### profile constants
 const c_default_zero = zero(Float64)
 
