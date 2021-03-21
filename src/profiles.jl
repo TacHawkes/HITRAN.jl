@@ -235,7 +235,7 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
         
         # call profile specific generic preparation function
         if haskey(profile_preparation_map, profile)
-            profile_kwargs = profile_preparation_map[profile](; temperature, diluent, query=result, column_names=result.names)            
+            profile_kwargs = profile_preparation_map[profile](; temperature, diluent, query=result)
         else        
             profile_kwargs = Dict()
         end        
@@ -335,7 +335,7 @@ end
     if !ismissing(v) && typeof(v) <: T
         return v
     else
-        return c_default_zero
+        return zero(T)
     end
 end
 
@@ -378,8 +378,7 @@ function hartmann_tran_lineshape(
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])
     γ_D = γ_Doppler(temperature, ν_0, mass)    
     γ_0 = γ_2 = Δ_0 = Δ_2 = zero(Float64)
-    ν_VC = zero(ComplexF64)
-    η = zero(ComplexF64)    
+    ν_VC = η = zero(ComplexF64)    
 
     # loop over all diluents and build combined line parameters    
     γ_0_dil = n_dil = T_ref = γ_0t = Δ_0_dil = Δ_0p_dil = Δ_0t = γ_2_dil = γ_2t = zero(Float64)
@@ -452,10 +451,7 @@ function prepare_hartmann_tran_kwargs(;kwargs...)
         Dict()
     end
     T_ht = hartmann_tran_reference_temperature(T)
-    q = get(kwargs, :query, nothing)
-    column_names = get(kwargs, :column_names) do
-        Dict()
-    end
+    q = get(kwargs, :query, nothing)    
 
     # prepare field names for diluents
     fields = Dict{Symbol,Dict{Symbol,Union{Int,Missing}}}()
@@ -552,10 +548,7 @@ function prepare_voigt_kwargs(;kwargs...)
     diluent = get(kwargs, :diluent) do 
         Dict()
     end    
-    q = get(kwargs, :query, nothing)
-    column_names = get(kwargs, :column_names) do
-        Dict()
-    end     
+    q = get(kwargs, :query, nothing)   
 
     # prepare field names for diluents
     fields = Dict{Symbol,Dict{Symbol,Union{Int,Missing}}}()
@@ -648,10 +641,7 @@ end
     diluent = get(kwargs, :diluent) do 
         Dict()
     end    
-    q = get(kwargs, :query, nothing)
-    column_names = get(kwargs, :column_names) do
-        Dict()
-    end     
+    q = get(kwargs, :query, nothing)    
 
     # prepare field names for diluents
     fields = Dict{Symbol,Dict{Symbol,Union{Int,Missing}}}()
