@@ -307,7 +307,7 @@ function hartmann_tran_profile!(
         
     if (abs(C_2t) ≈ 0.)                
         Threads.@threads for i = 1:length(ν)
-            Z_m = (im * (ν_0 - ν[i]) + C_0t) / (ν_0 * ν_a0 / c_c_SI)
+            @inbounds Z_m = (im * (ν_0 - ν[i]) + C_0t) / (ν_0 * ν_a0 / c_c_SI)
             wofz_Z_m = wofz(im * Z_m)      
             A_ν = √(π) * c_c_SI / ν_0 / ν_a0 * wofz_Z_m       
             B_ν = √(π) * c_c_SI * ν_a0 / ν_0 * ((1 - Z_m^2) * wofz_Z_m + Z_m / √(π))
@@ -316,7 +316,7 @@ function hartmann_tran_profile!(
     else
         Y = (ν_0 * ν_a0 / 2 / c_c_SI / C_2t)^2
         Threads.@threads for i = 1:length(ν)
-            X = (im * (ν_0 - ν[i]) + C_0t) / C_2t        
+            @inbounds X = (im * (ν_0 - ν[i]) + C_0t) / C_2t        
             Z_p = √(X + Y) + √(Y) 
             Z_m = √(X + Y) - √(Y)
 
@@ -331,7 +331,7 @@ function hartmann_tran_profile!(
 end
 
 @inline function get_line_parameter(q::SQLite.Query, index::Int, T::Type=Float64)::T
-    v = SQLite.getvalue(q, index, T)
+    v = SQLite.getvalue(q, index, T)    
     if !ismissing(v) && typeof(v) <: T
         return v
     else
