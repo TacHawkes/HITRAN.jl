@@ -164,9 +164,9 @@ function parse_kwargs(tables;kwargs...)
         ν_range = (result.min_nu, result.max_nu)
     end
     ν_min, ν_max = ν_range    
-    ν_step = get(kwargs, :ν_step, 0.01)
-    ν_wing = get(kwargs, :ν_wing, 0.)
-    ν_wing_hw = get(kwargs, :ν_wing_hw, 50.)    
+    ν_step = convert(Float64, get(kwargs, :ν_step, 0.01))
+    ν_wing = convert(Float64, get(kwargs, :ν_wing, 0.))
+    ν_wing_hw = convert(Float64, get(kwargs, :ν_wing_hw, 50.))
 
     components, natural_abundances = get_components(get(kwargs, :components, tables))        
     diluent = get(kwargs, :diluent, nothing)
@@ -330,32 +330,37 @@ function hartmann_tran_profile!(
     end
 end
 
-@inline function get_line_parameter(q::SQLite.Query, index::Int, T::Type=Float64)::T
-    v = SQLite.getvalue(q, index, T)    
-    if !ismissing(v) && typeof(v) <: T
-        return v
+# specialized getvalue functions which resemble the SQLite.getvalue functions but optimized for the type
+# of access we have in this module
+function getvalue(q::SQLite.Query, col::Int, ::Type{T}) where {T <: AbstractFloat}
+    handle = SQLite._stmt(q.stmt).handle
+    t = SQLite.sqlite3_column_type(handle, col)    
+    if t == SQLite.SQLITE_NULL
+        return zero(T)    
     else
-        return zero(T)
+        return SQLite.sqlitevalue(T, handle, col)
     end
 end
 
-@inline function get_line_parameter(q::SQLite.Query, index::Int, fallback_index::Int, T::Type=Float64)::T
-     v = SQLite.getvalue(q, index, T)
-     if !ismissing(v) && typeof(v) <: T
-        return v
-     else
-        v_alt = SQLite.getvalue(q, fallback_index, T)
-        if !ismissing(v_alt) && typeof(v_alt) <: T
-            return v_alt
-        else
-            return zero(T)
-        end
+function getvalue(q::SQLite.Query, col::Int, col_fb::Int, ::Type{T}) where {T <: AbstractFloat}
+    handle = SQLite._stmt(q.stmt).handle
+    t = SQLite.sqlite3_column_type(handle, col)
+    t_fb = SQLite.sqlite3_column_type(handle, col_fb)
+    if t == SQLite.SQLITE_NULL && t_fb == SQLite.SQLITE_NULL
+        return zero(T)
+    elseif t != SQLite.SQLITE_NULL        
+        return SQLite.sqlitevalue(T, handle, col)
+    else
+        return SQLite.sqlitevalue(T, handle, col_fb)
     end
 end
-get_line_parameter(q::SQLite.Query, ::Missing, index::Int, T::Type=Float64)::T = get_line_parameter(q, index, T)
-get_line_parameter(q::SQLite.Query, index::Int, ::Missing, T::Type=Float64)::T = get_line_parameter(q, index, T)
-get_line_parameter(::SQLite.Query, ::Missing, ::Missing, T::Type=Float64)::T = zero(T)
-get_line_parameter(::SQLite.Query, ::Missing, T::Type=Float64)::T = zero(T)
+
+get_line_parameter(q::SQLite.Query, index::Int, ::Type{T}=Float64) where {T <: AbstractFloat} = getvalue(q, index, T)
+get_line_parameter(q::SQLite.Query, index::Int, fallback_index::Int, ::Type{T}=Float64) where {T <: AbstractFloat} = getvalue(q, index, fallback_index, T)
+get_line_parameter(q::SQLite.Query, ::Missing, index::Int, ::Type{T}=Float64) where {T <: AbstractFloat} = get_line_parameter(q, index, T)
+get_line_parameter(q::SQLite.Query, index::Int, ::Missing, ::Type{T}=Float64) where {T <: AbstractFloat} = get_line_parameter(q, index, T)
+get_line_parameter(::SQLite.Query, ::Missing, ::Missing, ::Type{T}=Float64) where {T <: AbstractFloat} = zero(T)
+get_line_parameter(::SQLite.Query, ::Missing, ::Type{T}=Float64) where {T <: AbstractFloat} = zero(T)
 
 function hartmann_tran_lineshape(
     line            :: SQLite.Row,

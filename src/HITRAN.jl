@@ -3,7 +3,7 @@ __precompile__()
 module HITRAN
 
 using Printf, CSV, Downloads, SQLite, FileIO, JLD2,
-     Interpolations, SpecialFunctions, SHA
+     Interpolations, SpecialFunctions, SHA, DSP
 
 const module_path = dirname(pathof(HITRAN))
 
@@ -15,6 +15,8 @@ include("meta/tips.jl")
 include("database.jl")
 include("profiles.jl")
 include("spectra.jl")
+include("instruments.jl")
+include("util.jl")
 
 export  current_db,
         open_database,
@@ -28,5 +30,8 @@ export  current_db,
         moist_air,
         absorption_spectrum,
         transmittance_spectrum,
-        optical_depth
+        optical_depth,
+        wavelength_to_wavenumber,
+        frequency_to_wavenumber,
+        apply_instrument_function
 end
