@@ -47,6 +47,10 @@ Applies an instrument function to the given input spectrum.
 - `instrument_wing` (optional): The half-width of the range for calculating the instrument function in ``cm^{-1}``
 - `instrument_resolution` (optional): The full-width of the instrument resolution in ``cm^{-1}``
 
+# Output
+
+Returns a new vector with the spectrum influenced by the instrument function
+
 # Instrument functions
 
 The following instrument functions are supported. Use the stated symbol as value

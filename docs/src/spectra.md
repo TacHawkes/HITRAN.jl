@@ -46,7 +46,7 @@ composition dictionary with the correct water concentration.
     apply_instrument_function
 ```
 
-### Overview of instrument_functions
+### Overview of instrument functions
 
 The following graph shows all supported instrument functions for a resolution of ``0.1 cm^{-1}``.
 
