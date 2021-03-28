@@ -18,6 +18,8 @@ using Test
         @test_nowarn α(["StdAtm"], :sdvoigt)
         @test_nowarn α(["StdAtm"], :lorentz)
         @test_nowarn α(["StdAtm"], :gauss)
+        ν, absorption = α(["StdAtm"])
+        @test_nowarn apply_instrument_function(ν, absorption, :gaussian, 1.0, 0.1)
         @test isapprox(absorption_spectrum([0.], 1)[1], 0.0)
         @test isapprox(transmittance_spectrum([0.], 1)[1], 1.0)
         @test isapprox(optical_depth([0.], 1)[1], 0.0)
@@ -25,6 +27,18 @@ using Test
 
     @testset "Water saturation pressure" begin
         @test isapprox(HITRAN.p_s_h2o(273.15), 611.2911778902558)
+    end
+
+    @testset "Instrument functions" begin
+        x = -10:0.001:10
+        for (s, fn) in HITRAN.instrument_functions
+            @test isapprox(sum(fn(x, 0.1)*0.001), 1, atol=1e-2)
+        end        
+    end
+
+    @testset "Utility" begin
+        @test isapprox(wavelength_to_wavenumber(1e-6), 10000.0)
+        @test isapprox(frequency_to_wavenumber(30e9), 1, atol=1e-3)
     end
 end
 
