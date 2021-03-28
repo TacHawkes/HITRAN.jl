@@ -11,7 +11,7 @@ function instrument_triangular(x, res)
     return y
 end
 
-instrument_gaussian(x, res) = @. 2*√(log(2)/π)/res * exp(-4*log(2)*(x/res)^2)
+instrument_gaussian(x, res) = @. 2*√(log(2)/π)/res * exp(-log(2)*(2*x/res)^2)
 
 instrument_lorentzian(x, res) = @. res / π / (x^2 + res^2)
 
@@ -53,18 +53,18 @@ Returns a new vector with the spectrum influenced by the instrument function
 
 # Instrument functions
 
-The following instrument functions are supported. Use the stated symbol as value
+The following instrument functions ``I(x, Δ) `` are supported. Here `x`is the coordinate for evaluating the function, whose range is given by `instrument_wing`. `Δ` is the resolution parameter `instrument_resolution`. Use the stated symbol as value
 for the argument `instrument_function`.
 
-| Name |  Symbol | Description |
-| :---   | :--- |      ---: |
-| Rectangular | `:rectangular` |  A rectangular instrument function (e.g. a slit) |
-| Triangular | `:triangular` |  A triangular instrument function |
-| Gaussian | `:gaussian` |  A Gaussian instrument function (e.g. a broadband source) |
-| Lorentzian | `:lorentzian` |  A Lorentzian instrument function (e.g. a single frequency laser) |
-| Cosine | `:cosine` |  A cosine instrument function |
-| Diffraction | `:diffraction` |  A diffraction (sinc-type) instrument function |
-| Michelson | `:michelson` |  A Michelson interferometer-type instrument function (e.g. FTIR) |
+| Symbol | Equation |  Description |
+| :---   |      :---: | ---: |
+| `:rectangular` | `` \\begin{cases} \\frac{1}{Δ} & \\lvert x \\rvert \\leq \\frac{Δ}{2} \\\\ 0 & \\lvert x \\rvert > \\frac{Δ}{2} \\end{cases} `` |  A rectangular instrument function (e.g. a slit) |
+| `:triangular` | `` \\begin{cases} \\frac{1}{Δ} (1 - \\frac{\\lvert x \\rvert}{Δ}) & \\lvert x \\rvert \\leq Δ \\\\ 0 & \\lvert x \\rvert > Δ \\end{cases} ``  | A triangular instrument function |
+| `:gaussian` | `` \\frac{2}{Δ} \\sqrt{\\frac{\\mathrm{ln}2}{\\pi}} \\mathrm{exp} \\left (- \\mathrm{ln}2 \\left ( \\frac{2x}{Δ}\\right)^2 \\right )`` | A Gaussian instrument function (e.g. a broadband source) |
+| `:lorentzian` | `` \\frac{Δ}{\\pi} \\frac{1}{x^2+Δ^2} `` | A Lorentzian instrument function (e.g. a single frequency laser) |
+| `:cosine` | `` \\begin{cases} \\frac{\\pi}{4Δ} \\cos \\left ( \\frac {\\pi \\lvert x \\rvert}{2Δ} \\right ) & \\lvert x \\rvert \\leq Δ \\\\ 0 & \\lvert x \\rvert > Δ \\end{cases} `` | A cosine instrument function |
+| `:diffraction` | `` \\frac{1}{Δ} \\mathrm{sinc} \\left(  \\frac{\\pi x}{Δ} \\right)^2 `` | A diffraction (sinc-type) instrument function |
+| `:michelson` | `` \\frac{2}{Δ} \\mathrm{sinc} \\left(  \\frac{2 \\pi x}{Δ} \\right) `` | A Michelson interferometer-type instrument function (e.g. FTIR) |
 
 """
 function apply_instrument_function(

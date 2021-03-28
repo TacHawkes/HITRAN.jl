@@ -17,6 +17,7 @@ Please note that this package is not part of my employment but a mere hobby proj
 * Calculate absorption coefficients using the flexible Hartmann-Tran [^Ngo2013] line shape model (also used for the Voigt lineshape). Simple lineshapes like Lorentz and Gauss/Doppler are also included.
 * Simple and convenient syntax
 * Reasonable memory footprint and performance (roughly 1 order of magnitude faster than HAPI for the shown O2 A-band example)
+* Optimized for performance and large databases
 
 ## Installation
 
@@ -32,7 +33,6 @@ Install the package using the package manager:
 * CODATA2018[^Tiesinga2019] values are used for physical constants throughout the package and SI is used instead of cgs wherever possible
 * The Faddeeva function is calculated using Julia's [SpecialFunctions.jl](https://github.com/JuliaMath/SpecialFunctions.jl) package which is in turn using openlibm. Surprisingly (or not !?) this is about 30% faster than the algorithms described in [^Humlíček1982] and [^Tran2013][^Tran2014]
 * There are no convenience functions at the moment to filter the local database. However, direct SQL access to the database is possible which allows to create views to be used for spectral calculations. Therefore you can use the full power of SQL(ite) to sub-select/filter HITRAN data.
-* No instrument functions yet
 * No line-mixing
 * No choice for other TIPS implementations
 * SQL schema / queries are not optimized for high performance database queries. However, the performance limiting factor is the lineshape math and not the database access
