@@ -35,7 +35,7 @@ Install the package using the package manager:
 * There are no convenience functions at the moment to filter the local database. However, direct SQL access to the database is possible which allows to create views to be used for spectral calculations. Therefore you can use the full power of SQL(ite) to sub-select/filter HITRAN data.
 * No line-mixing
 * No choice for other TIPS implementations
-* SQL schema / queries are not optimized for high performance database queries. However, the performance limiting factor is the lineshape math and not the database access
+* SQL schema / queries are not optimized for high performance database queries.
 
 ## References
 
