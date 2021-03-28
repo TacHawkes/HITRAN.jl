@@ -1,10 +1,4 @@
 
-"""
-    instrument_rectangular(x, res)
-
-Rectangular instrument function with width of "res" (resolution), i.e. the function is "1/res" for -res/2 <= x < res/2.
-
-"""
 function instrument_rectangular(x, res)
     y = zeros(eltype(x), length(x))
     y[-res / 2 .<= x .< res / 2] .= 1 / res
@@ -27,6 +21,8 @@ function instrument_cosine(x, res)
     return y
 end
 
+instrument_diffraction(x, res) = @. 1/res * sinc(x/res)^2
+
 instrument_michelson(x, res) = @. 2/res * sinc(2/res*x)
 
 const instrument_functions = Dict{Symbol, Function}(
@@ -35,13 +31,37 @@ const instrument_functions = Dict{Symbol, Function}(
     :gaussian => instrument_gaussian,
     :lorentzian => instrument_lorentzian,
     :cosine => instrument_cosine,
+    :diffraction => instrument_diffraction,
     :michelson => instrument_michelson
 )
 
 """
-    apply_instrument_function()
+    apply_instrument_function(ν, α[, instrument_function=:rectangular, instrument_wing=10.0, instrument_resolution=0.1])
 
-TODO
+Applies an instrument function to the given input spectrum. 
+
+# Arguments
+- `ν`: The wavenumber vector
+- `α`: The calculated absorption coefficient using [`α`](@ref)
+- `instrument_function` (optional): A Symbol describing one of the instrument functions below
+- `instrument_wing` (optional): The half-width of the range for calculating the instrument function in ``cm^{-1}``
+- `instrument_resolution` (optional): The full-width of the instrument resolution in ``cm^{-1}``
+
+# Instrument functions
+
+The following instrument functions are supported. Use the stated symbol as value
+for the argument `instrument_function`.
+
+| Name |  Symbol | Description |
+| :---   | :--- |      ---: |
+| Rectangular | `:rectangular` |  A rectangular instrument function (e.g. a slit) |
+| Triangular | `:triangular` |  A triangular instrument function |
+| Gaussian | `:gaussian` |  A Gaussian instrument function (e.g. a broadband source) |
+| Lorentzian | `:lorentzian` |  A Lorentzian instrument function (e.g. a single frequency laser) |
+| Cosine | `:cosine` |  A cosine instrument function |
+| Diffraction | `:diffraction` |  A diffraction (sinc-type) instrument function |
+| Michelson | `:michelson` |  A Michelson interferometer-type instrument function (e.g. FTIR) |
+
 """
 function apply_instrument_function(
     ν::AbstractVector{T},

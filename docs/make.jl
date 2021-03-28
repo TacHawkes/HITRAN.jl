@@ -19,6 +19,5 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/TacHawkes/HITRAN.jl.git",    
-    versions = ["stable" => "v^", "v#.#.#"],
+    repo = "github.com/TacHawkes/HITRAN.jl.git"    
 )

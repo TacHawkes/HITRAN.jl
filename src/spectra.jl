@@ -1,5 +1,5 @@
 """
-    absorption_spectrum(α::AbstractVector, len)
+    absorption_spectrum(α, len)
 
 Computes the absorption spectrum for the given length `len` in centimeters.
 The vector `α` should be calculated using the corresponding [`α`](@ref) function.
@@ -7,7 +7,7 @@ The vector `α` should be calculated using the corresponding [`α`](@ref) functi
 absorption_spectrum(α::AbstractVector, len) = @. 1 - exp(-α*len)
 
 """
-    transmittance_spectrum(α::AbstractVector, len)
+    transmittance_spectrum(α, len)
 
 Computes the transmittance spectrum for the given length `len` in centimeters.
 The vector `α` should be calculated using the corresponding [`α`](@ref) function.
@@ -15,7 +15,7 @@ The vector `α` should be calculated using the corresponding [`α`](@ref) functi
 transmittance_spectrum(α::AbstractVector, len) = @. exp(-α*len)
 
 """
-    optical_depth(α::AbstractVector, len)
+    optical_depth(α, len)
 
 Computes the optical depth for the given length `len` in centimeters.
 The vector `α` should be calculated using the corresponding [`α`](@ref) function.

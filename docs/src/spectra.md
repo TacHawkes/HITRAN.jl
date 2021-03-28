@@ -40,19 +40,51 @@ composition dictionary with the correct water concentration.
     moist_air
 ```
 
+## Instrument functions
+
+```@docs
+    apply_instrument_function
+```
+
+### Overview of instrument_functions
+
+The following graph shows all supported instrument functions for a resolution of ``0.1 cm^{-1}``.
+
+```@eval
+using HITRAN, Plots
+
+x = -0.2:0.001:0.2
+plot()
+for (s, fn) in HITRAN.instrument_functions
+    plot!(x, fn(x, 0.1), label=String(s), lw=2)
+end
+
+savefig("plot.svg")
+```
+
+![](plot.svg)
+
 ## Convenience functions
 
 The following three functions are provided as a convenience to convert the absorption
 coefficient to either an absorption spectrum, transmittance spectrum or an optical depth.
 
 ```@docs
-    absorption_spectrum(α::AbstractVector, len)
+    absorption_spectrum
 ``` 
 
 ```@docs
-    transmittance_spectrum(α::AbstractVector, len)
+    transmittance_spectrum
 ``` 
 
 ```@docs
-    optical_depth(α::AbstractVector, len)
+    optical_depth
 ``` 
+
+```@docs
+    frequency_to_wavenumber
+```
+
+```@docs
+    wavelength_to_wavenumber
+```
