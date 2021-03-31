@@ -27,6 +27,12 @@ Install the package using the package manager:
 ] add HITRAN
 ```
 
+## Citation
+
+If you find this package useful and use it for your research, please cite it as:
+
+Kliebisch, Oliver. (2021, March 31). HITRAN.jl - A julia package for calculation absorption spectral using the HITRAN database. Zenodo. http://doi.org/10.5281/zenodo.4653317
+
 ## Notable differences to HAPI and missing features
 
 * Total internal partition sums use the [precalculated] (https://hitran.org/docs/iso-meta/) values converted to a JLD2 binary format instead of the original Python/Fortran wrapper of [^Gamache2017]
