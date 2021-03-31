@@ -1,8 +1,8 @@
-# Atmospheric transmission at the oxygen A-band
+# Atmospheric transmittance at the oxygen A-band
 
 The oxygen A-band is a spectral band of molecular oxygen $O_2$ in the wavelength region of about 759 nanometers to 771 nanometers. Molecular oxygen is quite remarkable because its ground state is a triplet configuration for the electrons and as everything would oxidize quite rapidly in our atmosphere if this would not be the case, we should be happy for this fact. The A-band is basically formed by the electronic transition from the ground state to the second excited singlet state in its lowest vibrational state. The band consists of a lot of individual transitions involving different rotational quantum states. For further reading pick your favorite spectroscopy textbook and have a look at the details (it is a rabbit hole with no end... and that's the fun part ;)).
 
-Let's say we want to know the A-band spectrum at standard HITRAN conditions ($T=296\,\text{K}, p=1.0\,\text{atm}$) and what is the maximum transmission through a 100 m air column. For simplicity we assume that the conditions (and abundance does not change along this air column.
+Let's say we want to know the A-band spectrum at standard HITRAN conditions ($T=296\,\text{K}, p=1.0\,\text{atm}$) and what is the maximum transmittance through a 100 m air column. For simplicity we assume that the conditions (and abundance does not change along this air column.
 
 ## Getting started
 
@@ -87,10 +87,10 @@ wavenumbers, absorption_coefficient = α(["StdAtm"];
 
 This specifies that our oxygen is dilutet by the surrounding air mass which tells the module how to properly calculate the collision-broadening of the spectral lines.
 
-To get the transmission along our air column we can use the little helper function and specifying the air path length in centimeters:
+To get the transmittance along our air column we can use the little helper function and specifying the air path length in centimeters:
 
 ```@repl o2_demo
-transmission = transmittance_spectrum(absorption_coefficient, 100e2);
+transmittance = transmittance_spectrum(absorption_coefficient, 100e2);
 ```
 
 ## Full code & plotting
@@ -104,11 +104,11 @@ fetch!("StdAtm", iso_id(["N2", "O2", "CO2", "H2O", "CH4"]), 12900, 13200, [:stan
 wavenumbers, absorption_coefficient = α(["StdAtm"];
         components=default_environments[:dry_air]        
     )
-transmission = transmittance_spectrum(absorption_coefficient, 100e2)
+transmittance = transmittance_spectrum(absorption_coefficient, 100e2)
 
 plot(
     wavenumbers,
-    transmission, 
+    transmittance,
     xlabel="Wavenumbers [1/cm]", 
     ylabel="Transmission", 
     title="Transmission along a 100 m air column",
@@ -123,11 +123,11 @@ fetch!("StdAtm", iso_id(["N2", "O2", "CO2", "H2O", "CH4"]), 12900, 13200, [:stan
 wavenumbers, absorption_coefficient = α(["StdAtm"];
         components=default_environments[:dry_air]        
     )
-transmission = transmittance_spectrum(absorption_coefficient, 100e2)
+transmittance = transmittance_spectrum(absorption_coefficient, 100e2)
 
 plot(
     wavenumbers,
-    transmission, 
+    transmittance, 
     xlabel="Wavenumbers [1/cm]", 
     ylabel="Transmission", 
     title="Transmission along a 100 m air column",
