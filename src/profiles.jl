@@ -112,8 +112,8 @@ function get_diluents(diluent::Dict{Tuple{T, T}, Dict{Symbol, V}}, components) w
             # default values and handle H2O            
             if has_water
                 diluents[mi_tuple] = Dict(
-                    :self => abundance - water_abundance,
-                    :air => 1 - abundance - water_abundance,
+                    :self => abundance * (1 - water_abundance),
+                    :air => (1 - abundance) * (1 - water_abundance),
                     :H2O => water_abundance
                 )
             else                

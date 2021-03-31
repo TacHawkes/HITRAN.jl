@@ -13,7 +13,7 @@ end
 
 instrument_gaussian(x, res) = @. 2*√(log(2)/π)/res * exp(-log(2)*(2*x/res)^2)
 
-instrument_lorentzian(x, res) = @. res / π / (x^2 + res^2)
+instrument_lorentzian(x, res) = @. res / 2/ π / (x^2 + (res / 2)^2)
 
 function instrument_cosine(x, res) 
     y = zeros(eltype(x), length(x))
@@ -58,12 +58,12 @@ for the argument `instrument_function`.
 
 | Symbol | Equation |  Description |
 | :---   |      :---: | ---: |
-| `:rectangular` | `` \\begin{cases} \\frac{1}{Δ} & \\lvert x \\rvert \\leq \\frac{Δ}{2} \\\\ 0 & \\lvert x \\rvert > \\frac{Δ}{2} \\end{cases} `` |  A rectangular instrument function (e.g. a slit) |
+| `:rectangular` | `` \\begin{cases} \\frac{1}{Δ} & \\lvert x \\rvert \\leq \\frac{Δ}{2} \\\\ 0 & \\lvert x \\rvert > \\frac{Δ}{2} \\end{cases} `` |  A rectangular instrument function |
 | `:triangular` | `` \\begin{cases} \\frac{1}{Δ} (1 - \\frac{\\lvert x \\rvert}{Δ}) & \\lvert x \\rvert \\leq Δ \\\\ 0 & \\lvert x \\rvert > Δ \\end{cases} ``  | A triangular instrument function |
 | `:gaussian` | `` \\frac{2}{Δ} \\sqrt{\\frac{\\mathrm{ln}2}{\\pi}} \\mathrm{exp} \\left (- \\mathrm{ln}2 \\left ( \\frac{2x}{Δ}\\right)^2 \\right )`` | A Gaussian instrument function (e.g. a broadband source) |
-| `:lorentzian` | `` \\frac{Δ}{\\pi} \\frac{1}{x^2+Δ^2} `` | A Lorentzian instrument function (e.g. a single frequency laser) |
+| `:lorentzian` | `` \\frac{Δ}{2\\pi} \\frac{1}{x^2+\\left(\\frac{Δ}{2}\\right)^2} `` | A Lorentzian instrument function (e.g. a single frequency laser) |
 | `:cosine` | `` \\begin{cases} \\frac{\\pi}{4Δ} \\cos \\left ( \\frac {\\pi \\lvert x \\rvert}{2Δ} \\right ) & \\lvert x \\rvert \\leq Δ \\\\ 0 & \\lvert x \\rvert > Δ \\end{cases} `` | A cosine instrument function |
-| `:diffraction` | `` \\frac{1}{Δ} \\mathrm{sinc} \\left(  \\frac{\\pi x}{Δ} \\right)^2 `` | A diffraction (sinc-type) instrument function |
+| `:diffraction` | `` \\frac{1}{Δ} \\mathrm{sinc}^2 \\left(  \\frac{\\pi x}{Δ} \\right) `` | A diffraction (sinc-type) instrument function |
 | `:michelson` | `` \\frac{2}{Δ} \\mathrm{sinc} \\left(  \\frac{2 \\pi x}{Δ} \\right) `` | A Michelson interferometer-type instrument function (e.g. FTIR) |
 
 """
