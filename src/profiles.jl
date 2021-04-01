@@ -166,8 +166,10 @@ function parse_kwargs(tables;kwargs...)
             result = first(query_local_db(sql))
             ν_range = (result.min_nu, result.max_nu)
         end
-        ν = ν_range[1]:ν_step:ν_range[2]    
-    end
+        ν = ν_range[1]:ν_step:ν_range[2]
+    else
+        ν_range = (minimum(ν), maximum(ν))
+    end    
     ν_min, ν_max = ν_range    
     ν_wing = convert(Float64, get(kwargs, :ν_wing, 0.))
     ν_wing_hw = convert(Float64, get(kwargs, :ν_wing_hw, 50.))
@@ -371,7 +373,7 @@ function hartmann_tran_lineshape(
     temperature     :: T,
     pressure        :: T,
     mass            :: T,        
-    ν               :: AbstractRange,
+    ν               :: Union{AbstractRange,AbstractVector{T}},
     ν_wing          :: T,
     ν_wing_hw       :: T,
     factor          :: T,
@@ -503,7 +505,7 @@ function voigt_lineshape(
     temperature     :: T,
     pressure        :: T,
     mass            :: T,        
-    ν               :: AbstractRange,
+    ν               :: Union{AbstractRange,AbstractVector{T}},
     ν_wing          :: T,
     ν_wing_hw       :: T,
     factor          :: T,
@@ -591,7 +593,7 @@ speed_dependent_voigt_profile!(
     temperature     :: T,
     pressure        :: T,
     mass            :: T,        
-    ν               :: AbstractRange,
+    ν               :: Union{AbstractRange,AbstractVector{T}},
     ν_wing          :: T,
     ν_wing_hw       :: T,
     factor          :: T,
@@ -749,7 +751,7 @@ function gauss_lineshape(
     temperature     :: T,
     pressure        :: T,
     mass            :: T,        
-    ν               :: AbstractRange,
+    ν               :: Union{AbstractRange,AbstractVector{T}},
     ν_wing          :: T,
     ν_wing_hw       :: T,
     factor          :: T,
