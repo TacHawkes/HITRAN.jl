@@ -151,20 +151,24 @@ function parse_kwargs(tables;kwargs...)
     pressure = convert(Float64, get(kwargs, :pressure, c_p_ref))
     temperature = convert(Float64, get(kwargs, :temperature, c_T_ref))
 
-    ν_range = get(kwargs, :ν_range) do
-        # find limits from the used tables
-        subqueries = []
-        for table in tables
-            push!(subqueries, " SELECT nu FROM " * table)
-        end
-        subquery = join(subqueries, " UNION ALL ")
+    ν = get(kwargs, :ν, nothing)
+    ν_step = convert(Float64, get(kwargs, :ν_step, 0.01))
+    if ν === nothing
+        ν_range = get(kwargs, :ν_range) do
+            # find limits from the used tables
+            subqueries = []
+            for table in tables
+                push!(subqueries, " SELECT nu FROM " * table)
+            end
+            subquery = join(subqueries, " UNION ALL ")
 
-        sql = "SELECT MIN(nu) AS min_nu, MAX(nu) AS max_nu FROM (" * subquery * ")"        
-        result = first(query_local_db(sql))
-        ν_range = (result.min_nu, result.max_nu)
+            sql = "SELECT MIN(nu) AS min_nu, MAX(nu) AS max_nu FROM (" * subquery * ")"        
+            result = first(query_local_db(sql))
+            ν_range = (result.min_nu, result.max_nu)
+        end
+        ν = ν_range[1]:ν_step:ν_range[2]    
     end
     ν_min, ν_max = ν_range    
-    ν_step = convert(Float64, get(kwargs, :ν_step, 0.01))
     ν_wing = convert(Float64, get(kwargs, :ν_wing, 0.))
     ν_wing_hw = convert(Float64, get(kwargs, :ν_wing_hw, 50.))
 
@@ -176,7 +180,7 @@ function parse_kwargs(tables;kwargs...)
         diluent = get_diluents(diluent, components)
     end    
 
-    return intensity_threshold, pressure, temperature, ν_range, 
+    return intensity_threshold, pressure, temperature, ν, ν_range, 
         ν_min, ν_max, ν_step, ν_wing, ν_wing_hw, diluent, components, natural_abundances
 end
 
@@ -204,11 +208,10 @@ chosen from the tables provided.
 """
 function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)        
     # parse and prepare input arguments
-    intensity_threshold, pressure, temperature, ν_range, ν_min, ν_max,
+    intensity_threshold, pressure, temperature, ν, ν_range, ν_min, ν_max,
     ν_step, ν_wing, ν_wing_hw, diluent, components, natural_abundances = parse_kwargs(tables;kwargs...)    
 
-    # prepare the common fields and parameters    
-    ν = ν_range[1]:ν_step:ν_range[2]
+    # prepare the common fields and parameters        
     len = length(ν)
     data = zeros(Float64, len)    
     data_cache = zeros(Float64, len)    
