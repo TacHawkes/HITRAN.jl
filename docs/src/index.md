@@ -31,7 +31,7 @@ Install the package using the package manager:
 
 If you find this package useful and use it for your research, please cite it as:
 
-Kliebisch, Oliver. (2021, March 31). HITRAN.jl - A julia package for calculation absorption spectral using the HITRAN database. Zenodo. http://doi.org/10.5281/zenodo.4653317
+Kliebisch, Oliver. (2021, March 31). HITRAN.jl - A Julia package for calculation absorption spectral using the HITRAN database. Zenodo. http://doi.org/10.5281/zenodo.4653316
 
 ## Notable differences to HAPI and missing features
 
