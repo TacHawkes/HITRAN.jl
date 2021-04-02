@@ -17,7 +17,7 @@ instrument_lorentzian(x, res) = @. res / 2/ π / (x^2 + (res / 2)^2)
 
 function instrument_cosine(x, res) 
     y = zeros(eltype(x), length(x))
-    y[abs.(x) .<= res] = @. cos(π*@view(x[abs.(x) .<= res])/(2*res))/res*pi/4
+    y[abs.(x) .<= res] .= @. cos(π*@view(x[abs.(x) .<= res])/(2*res))/res*pi/4
     return y
 end
 
