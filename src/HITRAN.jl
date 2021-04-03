@@ -8,6 +8,7 @@ using Printf, CSV, Downloads, SQLite, FileIO, JLD2,
 const module_path = dirname(pathof(HITRAN))
 
 include("constants.jl")
+include("util.jl")
 include("meta/components.jl")
 include("meta/parameters.jl")
 include("meta/environments.jl")
@@ -16,7 +17,6 @@ include("database.jl")
 include("profiles.jl")
 include("spectra.jl")
 include("instruments.jl")
-include("util.jl")
 
 export  current_db,
         open_database,

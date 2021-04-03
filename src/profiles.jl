@@ -124,7 +124,7 @@ function get_diluents(diluent::Dict{Tuple{T, T}, Dict{Symbol, V}}, components) w
             end
         end
 
-        if (0 <= sum(values(diluents[mi_tuple])) <= 1) == false
+        if (0 ≲ sum(values(diluents[mi_tuple])) ≲ 1) == false
             throw(ErrorException(
             "Sum of diluent fractions must not exceed 1 or lie below zero"
             ))
