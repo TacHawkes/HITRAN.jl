@@ -124,7 +124,7 @@ function get_diluents(diluent::Dict{Tuple{T, T}, Dict{Symbol, V}}, components) w
             end
         end
 
-        if (0 ≲ sum(values(diluents[mi_tuple])) ≲ 1) == false
+        if (0.0 ≲ sum(values(diluents[mi_tuple])) ≲ 1.0) == false
             throw(ErrorException(
             "Sum of diluent fractions must not exceed 1 or lie below zero"
             ))
@@ -202,6 +202,7 @@ chosen from the tables provided.
 - `intensity_threshold`: the minimum line strength in ``cm^{-1}/(\\text{molecule} \\cdot cm^{-2})``
 - `pressure`: the environmental pressure in atmospheres (default: $c_p_ref atm)
 - `temperature`: the environmental temperature in Kelvin (default: $c_T_ref K)
+- `ν`: a vector or range of wavenumbers for which the absorption should be calculated. Useful for reusing the output ν vector for multiple calculations. If ν is supplied ν_range will be ignored.[]
 - `ν_range`: a tuple of the form (ν_min, ν_max) where ν_min/ν_max is the minimum/maximum wavenumber for the absorption_spectrum respectively in ``cm^{-1}``
 - `ν_step`: the wavenumber step in ``cm^{-1}`` (default: 0.01 ``cm^{-1}``)
 - `ν_wing`: absolute calculation width of a line in ``cm^{-1}`` (default: 0 ``cm^{-1}``)
