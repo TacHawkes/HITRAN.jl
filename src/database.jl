@@ -244,7 +244,7 @@ end
 function download_HITRAN(    
     url::String,
     parameters::AbstractVector{String};
-    verbose=true)
+    verbose=false)
         
     tmp_file = tempname()
     if verbose
