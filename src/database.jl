@@ -145,7 +145,7 @@ fetch!(
     ν_min           :: Number,
     ν_max           :: Number,
     parameters      :: Union{Symbol, AbstractVector{Symbol}}=:standard
-) where T <: Integer = fetch!(current_db(), name, iso_id([i for i in global_ids[1]], [i for i in global_ids[2]]),ν_min, ν_max, parameters)
+) where T <: Integer = fetch!(current_db(), name, iso_id([i[1] for i in global_ids], [i[2] for i in global_ids]),ν_min, ν_max, parameters)
 
 """
     iso_id([db::SQLite.DB,] M::T, I::T) where T <: Union{Integer, AbstractVector{Integer}}
@@ -244,7 +244,7 @@ end
 function download_HITRAN(    
     url::String,
     parameters::AbstractVector{String};
-    verbose=false)
+    verbose=true)
         
     tmp_file = tempname()
     if verbose

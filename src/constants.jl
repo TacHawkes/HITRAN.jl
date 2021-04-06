@@ -7,7 +7,7 @@ const c_T_ref = 296.
 const c_p_ref = 1.
 
 # conversion factor atm to Pa
-const c_atm_factor = 101325
+const c_atm_factor = 101325.
 
 #= 
 Hartmann-Tran reference temperatures for line parameters
@@ -27,7 +27,7 @@ const c_HT_T_ref = Base.ImmutableDict(
 ## SI constants according to CODATA2018
 
 # speed of light in m/s (SI)
-const c_c_SI = 299792458
+const c_c_SI = 299792458.
 
 # Avogrado constant (dimensionless) (SI)
 const c_NA_SI = 6.02214076e23
@@ -42,7 +42,7 @@ const c_h_SI = 6.62607015e-34
 const c_c2 = 1e2*c_h_SI * c_c_SI / c_kB_SI
 
 # natural log of 2
-const c_log2 = log(2)
+const c_log2 = log(2.)
 
 ### profile constants
 const c_default_zero = zero(Float64)
@@ -77,8 +77,8 @@ Climatology 57, 6 (2018): 1265-1272
 
 const c_a = 43.494
 const c_b = 6545.8
-const c_d1 = 278
-const c_d2 = 868
+const c_d1 = 278.
+const c_d2 = 868.
 
 const c_α = 1.00062
 const c_β = 3.14e-8

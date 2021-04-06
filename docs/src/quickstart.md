@@ -129,8 +129,8 @@ plot(
     wavenumbers,
     transmittance, 
     xlabel="Wavenumbers [1/cm]", 
-    ylabel="Transmission", 
-    title="Transmission along a 100 m air column",
+    ylabel="Transmittance", 
+    title="Transmittance along a 100 m air column",
     leg=false
 )
 savefig("air-plot.svg"); nothing # hide

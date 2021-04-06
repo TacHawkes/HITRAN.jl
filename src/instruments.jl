@@ -13,7 +13,7 @@ end
 
 instrument_gaussian(x, res) = @. 2*√(log(2)/π)/res * exp(-log(2)*(2*x/res)^2)
 
-instrument_lorentzian(x, res) = @. res / 2/ π / (x^2 + (res / 2)^2)
+instrument_lorentzian(x, res) = @. res / 2. / π / (x^2 + (res / 2.)^2 )
 
 function instrument_cosine(x, res) 
     y = zeros(eltype(x), length(x))
@@ -41,7 +41,7 @@ const instrument_functions = Dict{Symbol, Function}(
 Applies an instrument function to the given input spectrum. 
 
 # Arguments
-- `ν`: The wavenumber vector
+- `ν`: The wavenumber vector (NOTE: Uniform spacing is assumed but not checked!)
 - `α`: The calculated absorption coefficient using [`α`](@ref)
 - `instrument_function` (optional): A Symbol describing one of the instrument functions below
 - `instrument_wing` (optional): The half-width of the range for calculating the instrument function in ``cm^{-1}``
