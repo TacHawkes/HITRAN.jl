@@ -564,10 +564,11 @@ function voigt_lineshape(
     # loop over all diluents and build combined line parameters    
     for (diluent_name, diluent_abundance) in diluent    
         # get Voigt parameters if available        
+        vg_dil = fields[diluent_name]
 
         # γ_0 contribution
-        γ_0_dil = get_line_parameter(q, fields[diluent_name][:γ_0])        
-        n_dil = get_line_parameter(q, fields[diluent_name][:n])        
+        γ_0_dil = get_line_parameter(q, vg_dil[:γ_0])        
+        n_dil = get_line_parameter(q, vg_dil[:n])        
         if (diluent_name == :self || n_dil == c_default_zero)
             n_dil = get_line_parameter(q, q.lookup[:n_air])
         end                
@@ -576,8 +577,8 @@ function voigt_lineshape(
         γ_0 += diluent_abundance * γ_0t
 
         # Δ_0 contribution        
-        Δ_0_dil = get_line_parameter(q, fields[diluent_name][:Δ_0])
-        Δ_0p_dil = get_line_parameter(q, fields[diluent_name][:Δ_0p])                
+        Δ_0_dil = get_line_parameter(q, vg_dil[:Δ_0])
+        Δ_0p_dil = get_line_parameter(q, vg_dil[:Δ_0p])                
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t       
     end
@@ -646,11 +647,12 @@ speed_dependent_voigt_profile!(
 
     # loop over all diluents and build combined line parameters    
     for (diluent_name, diluent_abundance) in diluent    
-        # get Voigt parameters if available        
+        # get Voigt parameters if available    
+        sd_dil = fields[diluent_name]    
 
         # γ_0 contribution
-        γ_0_dil = get_line_parameter(q, fields[diluent_name][:γ_0])        
-        n_dil = get_line_parameter(q, fields[diluent_name][:n])        
+        γ_0_dil = get_line_parameter(q, sd_dil[:γ_0])        
+        n_dil = get_line_parameter(q, sd_dil[:n])        
         if (diluent_name == :self || n_dil == c_default_zero)
             n_dil = get_line_parameter(q, q.lookup[:n_air])
         end                
@@ -659,13 +661,13 @@ speed_dependent_voigt_profile!(
         γ_0 += diluent_abundance * γ_0t
 
         # Δ_0 contribution        
-        Δ_0_dil = get_line_parameter(q, fields[diluent_name][:Δ_0])
-        Δ_0p_dil = get_line_parameter(q, fields[diluent_name][:Δ_0p])                
+        Δ_0_dil = get_line_parameter(q, sd_dil[:Δ_0])
+        Δ_0p_dil = get_line_parameter(q, sd_dil[:Δ_0p])                
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t    
         
         # γ_2 contribution
-        γ_2_dil = get_line_parameter(q, fields[diluent_name][:γ_2])
+        γ_2_dil = get_line_parameter(q, sd_dil[:γ_2])
         γ_2t = γ_2_dil * pressure / c_p_ref
         γ_2 += diluent_abundance * γ_2t
     end
@@ -735,9 +737,11 @@ function lorentz_lineshape(
 
     # loop over all diluents and build combined line parameters
     for (diluent_name, diluent_abundance) in diluent                        
+        lor_dil = fields[diluent_name]
+
         # γ_0 contribution
-        γ_0_dil = get_line_parameter(q, fields[diluent_name][:γ_0])        
-        n_dil = get_line_parameter(q, fields[diluent_name][:n])        
+        γ_0_dil = get_line_parameter(q, lor_dil[:γ_0])        
+        n_dil = get_line_parameter(q, lor_dil[:n])        
         if (diluent_name == :self || n_dil == c_default_zero)
             n_dil = get_line_parameter(q, q.lookup[:n_air])
         end                
@@ -746,8 +750,8 @@ function lorentz_lineshape(
         γ_0 += diluent_abundance * γ_0t
 
         # Δ_0 contribution        
-        Δ_0_dil = get_line_parameter(q, fields[diluent_name][:Δ_0])
-        Δ_0p_dil = get_line_parameter(q, fields[diluent_name][:Δ_0p])                
+        Δ_0_dil = get_line_parameter(q, lor_dil[:Δ_0])
+        Δ_0p_dil = get_line_parameter(q, lor_dil[:Δ_0p])                
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t
     end
