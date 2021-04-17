@@ -236,19 +236,19 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
 end
 
 function α(
-    tables::AbstractVector{String},
-    profile::Symbol,
-    components :: Dict{Tuple{Int,Int},Float64},
+    tables              ::  AbstractVector{String},
+    profile             ::  Symbol,
+    components          ::  Dict{Tuple{Int,Int},Float64},
     diluent,
-    intensity_threshold,
-    pressure::T,
-    temperature::T,
-    ν :: Union{AbstractRange,AbstractVector{T}},
-    ν_range,    
-    ν_wing, 
-    ν_wing_hw,    
-    natural_abundances,
-    molar_masses :: Dict{Tuple{Int, Int}, Float64}
+    intensity_threshold ::  T,
+    pressure            ::  T,
+    temperature         ::  T,
+    ν                   ::  Union{AbstractRange,AbstractVector{T}},
+    ν_range             ::  Tuple{T, T},    
+    ν_wing              ::  T, 
+    ν_wing_hw           ::  T,  
+    natural_abundances  ::  Dict{Tuple{Int,Int},Float64},
+    molar_masses        ::  Dict{Tuple{Int, Int}, Float64}
 ) where T <: AbstractFloat
     # allocate output    
     data = data_cache = similar(ν)    

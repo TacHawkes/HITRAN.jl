@@ -4,11 +4,12 @@ const tips_cache = Dict{Integer, Matrix{Float64}}()
     data::Matrix{Float64} = get!(tips_cache, iso_id) do 
         path = joinpath(module_path, "meta", "q", @sprintf("q%d.jld2", iso_id))
         if isfile(path) === false
-            return isotopologue(iso_id)[1, :q_t0]
-        end        
-        load(path, "data")
+            d = [c_T_ref isotopologue(iso_id)[1, :q_t0]; (c_T_ref + 1.0) isotopologue(iso_id)[1, :q_t0]]            
+        else        
+            load(path, "data")
+        end
     end
-    ind_lo = min(size(data)[1] - 1, searchsortedfirst(@view(data[:,1]), temp) - 1)
+    ind_lo = max(1, min(size(data)[1] - 1, searchsortedfirst(@view(data[:,1]), temp) - 1))
     ind_hi = min(size(data)[1], ind_lo + 1)        
 
     # return linear interpolation
