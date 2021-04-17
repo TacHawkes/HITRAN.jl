@@ -2,8 +2,15 @@ __precompile__()
 
 module HITRAN
 
-using Printf, CSV, Downloads, SQLite, FileIO, JLD2,
-     Interpolations, SpecialFunctions, SHA, DSP
+using Printf
+using CSV
+using Downloads
+using DSP
+using FileIO
+using JLD2
+using SHA
+using SpecialFunctions
+using SQLite
 
 const module_path = dirname(pathof(HITRAN))
 
@@ -34,4 +41,5 @@ export  current_db,
         wavelength_to_wavenumber,
         frequency_to_wavenumber,
         apply_instrument_function
+
 end

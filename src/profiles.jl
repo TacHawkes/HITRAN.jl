@@ -25,7 +25,7 @@ function get_components(tables::AbstractVector{String})
     end
     sql = join(subqueries, " UNION ALL ")
     result = query_local_db(sql)        
-    components = Dict{Tuple{Integer,Integer},AbstractFloat}()
+    components = Dict{Tuple{Int,Int}, Float64}()
     for row in result
         components[(row.molecule_id, row.local_id)] = row.abundance
     end            
@@ -41,7 +41,7 @@ function get_components(comps::AbstractVector{Tuple{T,T}}) where T <: Integer
             IN 		(VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in comps], ',') * ")"
     result = query_local_db(sql, [i for t in comps for i in t])
     # replace components by new dict
-    components = Dict{Tuple{Integer,Integer},AbstractFloat}()
+    components = Dict{Tuple{Int,Int},Float64}()
     for row in result
         components[(row.molecule_id, row.local_id)] = row.abundance
     end        
@@ -57,7 +57,7 @@ function get_components(comps::Dict{Tuple{T,T},V}) where T <: Integer where V <:
             IN 		(VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in keys(comps)], ',') * ")"
     result = query_local_db(sql, [i for t in keys(comps) for i in t])
     # replace components by new dict
-    natural_abundances = Dict{Tuple{Integer,Integer},AbstractFloat}()
+    natural_abundances = Dict{Tuple{Int,Int},Float64}()
     for row in result
         natural_abundances[(row.molecule_id, row.local_id)] = row.abundance
     end
@@ -72,7 +72,7 @@ function get_diluents(diluent::Dict{Symbol, T}, components) where T <: Number
             ))
     end
 
-    if (0 <= sum(values(diluent)) <= 1) == false
+    if (0.0 ≲ sum(values(diluent)) ≲ 1.0) == false
         throw(ErrorException(
             "Sum of diluent fractions must not exceed 1 or lie below zero"
             ))    
@@ -214,13 +214,44 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
     intensity_threshold, pressure, temperature, ν, ν_range, ν_min, ν_max,
     ν_step, ν_wing, ν_wing_hw, diluent, components, natural_abundances = parse_kwargs(tables;kwargs...)    
 
-    # prepare the common fields and parameters        
-    len = length(ν)
-    data = zeros(Float64, len)    
-    data_cache = zeros(Float64, len)    
     molar_masses = Dict(
         keys(components) .=> molar_mass(keys(components))
     )    
+
+    α(
+        tables,
+        profile,
+        components,
+        diluent,
+        intensity_threshold,
+        pressure,
+        temperature,
+        ν,
+        ν_range,        
+        ν_wing, 
+        ν_wing_hw,    
+        natural_abundances,
+        molar_masses
+    )
+end
+
+function α(
+    tables::AbstractVector{String},
+    profile::Symbol,
+    components :: Dict{Tuple{Int,Int},Float64},
+    diluent,
+    intensity_threshold,
+    pressure::T,
+    temperature::T,
+    ν :: Union{AbstractRange,AbstractVector{T}},
+    ν_range,    
+    ν_wing, 
+    ν_wing_hw,    
+    natural_abundances,
+    molar_masses :: Dict{Tuple{Int, Int}, Float64}
+) where T <: AbstractFloat
+    # allocate output    
+    data = data_cache = similar(ν)    
 
     # molecule concentration in molecules / cm^3
     # allows conversion from cm^2/molecule -> cm^-1
@@ -245,33 +276,42 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
         else        
             profile_kwargs = Dict()
         end        
-            
+        
+        # field indices
+        ind_sw = lookup_symbol(result, :sw)
+        ind_nu = lookup_symbol(result, :nu)
+        ind_elower = lookup_symbol(result, :elower)
+
         last_id = 0
         q_t = q_t_ref = 0.0
-        for line in result            
-            # partition sum
-            if last_id != line.global_iso_id            
-                q_t = tips(line.global_iso_id, temperature)            
-                q_t_ref = tips(line.global_iso_id, c_T_ref)
+        for line in result 
+            gid::Int = line.global_iso_id
+            mid::Int = line.molec_id
+            lid::Int = line.local_iso_id    
+            MI = (mid, lid)       
+            # partition sum            
+            if last_id != gid
+                q_t = tips(gid, temperature)            
+                q_t_ref = tips(gid, c_T_ref)
             end
 
-            # environment adjusted line intensity            
-            S_ij = Sij_T(line.sw, temperature, c_T_ref, q_t, q_t_ref, line.elower, line.nu)            
+            # environment adjusted line intensity
+            S_ij = Sij_T(getvalue(result, ind_sw, Float64), temperature, c_T_ref, q_t, q_t_ref, getvalue(result, ind_elower, Float64), getvalue(result, ind_nu, Float64))            
 
             # skip weak lines
             if S_ij < intensity_threshold
                 continue
             end         
             
-            factor = volume_conc * S_ij * components[(line.molec_id, line.local_iso_id)] / 
-                natural_abundances[(line.molec_id, line.local_iso_id)]
+            factor = volume_conc * S_ij * components[MI] / 
+                natural_abundances[MI]            
             
             # call lineshape function
             lineshape_map[profile](line,
-                diluent[(line.molec_id, line.local_iso_id)],
+                diluent[MI],
                 temperature,
                 pressure,
-                molar_masses[(line.molec_id, line.local_iso_id)],
+                molar_masses[MI],
                 ν,
                 ν_wing,
                 ν_wing_hw,
@@ -284,6 +324,8 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
 
     return ν, data
 end
+
+α(tables::String, profile=:hartmann_tran;kwargs...) = α([tables], profile; kwargs...)
 
 function hartmann_tran_reference_temperature(T)::Float64
     for (T_range, T_ref) in c_HT_T_ref
@@ -304,7 +346,7 @@ function hartmann_tran_profile!(
     Δ_0::T,
     Δ_2::T,
     η::V
-) where T <: AbstractFloat where V <: Complex    
+) where T <: AbstractFloat where V <: Complex   
     C_0 = γ_0 + im * Δ_0
     C_2 = γ_2 + im * Δ_2
     C_0t = (1 - η) * (C_0 - 3C_2 / 2.) + ν_VC
@@ -800,5 +842,5 @@ const profile_preparation_map = Dict(
     :lorentz => prepare_voigt_kwargs,    
 )
 
-# Fadeeva function
+# Faddeeva function
 wofz(z) = erfcx(-im * z)
