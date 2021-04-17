@@ -159,11 +159,13 @@ function parse_kwargs(tables;kwargs...)
             sql = "SELECT MIN(nu) AS min_nu, MAX(nu) AS max_nu FROM (" * subquery * ")"        
             result = first(query_local_db(sql))
             ν_range = (result.min_nu, result.max_nu)
-        end
+        end        
+        ν_range = (convert(Float64, ν_range[1]), convert(Float64, ν_range[2]))
         ν = ν_range[1]:ν_step:ν_range[2]
     else
         ν_range = (minimum(ν), maximum(ν))
     end    
+
     ν_min, ν_max = ν_range    
     ν_wing = convert(Float64, get(kwargs, :ν_wing, 0.))
     ν_wing_hw = convert(Float64, get(kwargs, :ν_wing_hw, 50.))
@@ -245,7 +247,8 @@ function α(
     molar_masses        ::  Dict{Tuple{Int, Int}, Float64}
 ) where T <: AbstractFloat
     # allocate output    
-    data = data_cache = similar(ν)    
+    data = zeros(length(ν))
+    data_cache = zeros(length(ν))
 
     # lineshape function
     lineshape::Function = lineshape_map[profile]
@@ -294,7 +297,7 @@ function α(
 
             # environment adjusted line intensity
             S_ij = Sij_T(getvalue(result, ind_sw, Float64), temperature, c_T_ref, q_t, q_t_ref, getvalue(result, ind_elower, Float64), getvalue(result, ind_nu, Float64))            
-
+            
             # skip weak lines
             if S_ij < intensity_threshold
                 continue
@@ -427,7 +430,7 @@ function hartmann_tran_lineshape(
     γ_D = γ_Doppler(temperature, ν_0, mass)    
     γ_0 = γ_2 = Δ_0 = Δ_2 = zero(Float64)
     ν_VC = η = zero(ComplexF64)    
-
+    
     # loop over all diluents and build combined line parameters    
     γ_0_dil = n_dil = T_ref = γ_0t = Δ_0_dil = Δ_0p_dil = Δ_0t = γ_2_dil = γ_2t = zero(Float64)
     Δ_2_dil = Δ_2t = η_dil = ν_VC_dil = κ_dil = zero(Float64)
@@ -485,6 +488,8 @@ function hartmann_tran_lineshape(
     ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
     ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)    
     
+    #println(join((factor, ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, η), ", "))
+
     hartmann_tran_profile!(out_cache, @view(ν[ind_lo:ind_hi]), ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, η)
     for i = 1:(ind_hi - ind_lo + 1)
         data[ind_lo + i - 1] += factor * out_cache[i]
