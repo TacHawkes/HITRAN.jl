@@ -486,9 +486,7 @@ function hartmann_tran_lineshape(
 
     # find a suitable bisection for integrating the data into the vector
     ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
-    ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)    
-    
-    #println(join((factor, ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, η), ", "))
+    ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)        
 
     hartmann_tran_profile!(out_cache, @view(ν[ind_lo:ind_hi]), ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, η)
     for i = 1:(ind_hi - ind_lo + 1)
