@@ -232,20 +232,20 @@ function α(tables::AbstractVector{String}, profile=:hartmann_tran;kwargs...)
 end
 
 function α(
-    tables              ::  AbstractVector{String},
-    profile             ::  Symbol,
-    components          ::  Dict{Tuple{Int,Int}, Float64},
+    tables              ,
+    profile             ,
+    components          ,
     diluent,
-    intensity_threshold ::  T,
-    pressure            ::  T,
-    temperature         ::  T,
-    ν                   ::  Union{AbstractRange{T}, AbstractVector{T}},
-    ν_range             ::  Tuple{T, T},    
-    ν_wing              ::  T, 
-    ν_wing_hw           ::  T,  
-    natural_abundances  ::  Dict{Tuple{Int, Int}, Float64},
-    molar_masses        ::  Dict{Tuple{Int, Int}, Float64}
-) where T <: AbstractFloat
+    intensity_threshold ,
+    pressure            ,
+    temperature         ,
+    ν                   ,
+    ν_range             ,    
+    ν_wing              , 
+    ν_wing_hw           ,  
+    natural_abundances  ,
+    molar_masses        
+) 
     # allocate output    
     data = zeros(length(ν))
     data_cache = zeros(length(ν))
@@ -306,7 +306,7 @@ function α(
             factor = volume_conc * S_ij * components[MI] / 
                 natural_abundances[MI]            
             
-            # call lineshape function
+            # call lineshape function            
             lineshape(result,
                 diluent[MI],
                 temperature,
@@ -336,35 +336,35 @@ function hartmann_tran_reference_temperature(T)::Float64
 end
 
 function hartmann_tran_profile!(
-    out::AbstractVector{T},
-    ν::AbstractVector{T},
-    ν_0::T,
-    ν_VC::V,
-    γ_D::T,
-    γ_0::T,
-    γ_2::T,
-    Δ_0::T,
-    Δ_2::T,
-    η::V
-) where T <: AbstractFloat where V <: Complex   
+    out,
+    ν,
+    ν_0,
+    ν_VC,
+    γ_D,
+    γ_0,
+    γ_2,
+    Δ_0,
+    Δ_2,
+    η
+)
     C_0 = γ_0 + im * Δ_0
     C_2 = γ_2 + im * Δ_2
-    C_0t = (1 - η) * (C_0 - 3C_2 / 2.) + ν_VC
-    C_2t = (1 - η) * C_2
+    C_0t = (1.0 - η) * (C_0 - 3.0*C_2 / 2.) + ν_VC
+    C_2t = (1.0 - η) * C_2
     ν_a0 = c_c_SI * γ_D / (√(c_log2) * ν_0)
         
     if (abs(C_2t) ≈ 0.)                
         Threads.@threads for i = 1:length(ν)
-            @inbounds Z_m = (im * (ν_0 - ν[i]) + C_0t) / (ν_0 * ν_a0 / c_c_SI)
+            Z_m = (im * (ν_0 - ν[i]) + C_0t) / (ν_0 * ν_a0 / c_c_SI)
             wofz_Z_m = wofz(im * Z_m)      
             A_ν = √(π) * c_c_SI / ν_0 / ν_a0 * wofz_Z_m       
-            B_ν = √(π) * c_c_SI * ν_a0 / ν_0 * ((1 - Z_m^2) * wofz_Z_m + Z_m / √(π))
-            @inbounds out[i] = 1 / π * real(A_ν / (1 - (ν_VC - η * (C_0 - 3C_2 / 2) * A_ν + (η * C_2 / ν_a0^2) * B_ν)))
+            B_ν = √(π) * c_c_SI * ν_a0 / ν_0 * ((1.0 - Z_m^2.) * wofz_Z_m + Z_m / √(π))
+            out[i] = 1.0 / π * real(A_ν / (1.0 - (ν_VC - η * (C_0 - 3.0*C_2 / 2.0) * A_ν + (η * C_2 / ν_a0^2.0) * B_ν)))
         end        
     else
-        Y = (ν_0 * ν_a0 / 2 / c_c_SI / C_2t)^2
+        Y = (ν_0 * ν_a0 / 2. / c_c_SI / C_2t)^2
         Threads.@threads for i = 1:length(ν)
-            @inbounds X = (im * (ν_0 - ν[i]) + C_0t) / C_2t        
+            X = (im * (ν_0 - ν[i]) + C_0t) / C_2t        
             Z_p = √(X + Y) + √(Y) 
             Z_m = √(X + Y) - √(Y)
 
@@ -372,8 +372,8 @@ function hartmann_tran_profile!(
             wofz_Z_p = wofz(im * Z_p)      
 
             A_ν = √(π) * c_c_SI / ν_0 / ν_a0 * (wofz_Z_m - wofz_Z_p)
-            B_ν = ν_a0^2 / C_2t^2 * (-1 + √(π) / 2 / √(Y) * (1 - Z_m^2) * wofz_Z_m - √(π) / 2 / √(Y) * (1 - Z_p^2) * wofz_Z_p)        
-            @inbounds out[i] = 1 / π * real(A_ν / (1 - (ν_VC - η * (C_0 - 3C_2 / 2) * A_ν + (η * C_2 / ν_a0^2) * B_ν)))
+            B_ν = ν_a0^2 / C_2t^2 * (-1. + √(π) / 2. / √(Y) * (1. - Z_m^2.) * wofz_Z_m - √(π) / 2. / √(Y) * (1. - Z_p^2.) * wofz_Z_p)        
+            out[i] = 1. / π * real(A_ν / (1. - (ν_VC - η * (C_0 - 3. * C_2 / 2.) * A_ν + (η * C_2 / ν_a0^2.) * B_ν)))
         end
     end
 end
@@ -411,22 +411,23 @@ get_line_parameter(::SQLite.Query, ::Missing, ::Missing, ::Type{T}=Float64) wher
 get_line_parameter(::SQLite.Query, ::Missing, ::Type{T}=Float64) where {T <: AbstractFloat} = zero(T)
 
 function hartmann_tran_lineshape(
-    q               :: SQLite.Query,
-    diluent         :: Dict{Symbol, T},
-    temperature     :: T,
-    pressure        :: T,
-    mass            :: T,        
-    ν               :: Union{AbstractRange{T}, AbstractVector{T}},
-    ν_wing          :: T,
-    ν_wing_hw       :: T,
-    factor          :: T,
-    data            :: AbstractVector{T},
-    out_cache       :: AbstractVector{T},
-    T_ref_HT        :: T,
-    fields          :: Dict{Symbol,Dict{Symbol,Union{Int,Missing}}},
-    voigt_fields    :: Dict{Symbol,Dict{Symbol,Union{Int,Missing}}}
-) where T <: AbstractFloat
+    q,
+    diluent,
+    temperature,
+    pressure,
+    mass,
+    ν,
+    ν_wing,
+    ν_wing_hw,
+    factor,
+    data,
+    out_cache,
+    T_ref_HT,
+    fields,
+    voigt_fields
+)
     ν_0 = get_line_parameter(q, q.lookup[:nu])
+    ind_air::Int = q.lookup[:n_air]
     γ_D = γ_Doppler(temperature, ν_0, mass)    
     γ_0 = γ_2 = Δ_0 = Δ_2 = zero(Float64)
     ν_VC = η = zero(ComplexF64)    
@@ -439,40 +440,40 @@ function hartmann_tran_lineshape(
         ht_dil = fields[diluent_name]
         vg_dil = voigt_fields[diluent_name]
         # γ_0 contribution        
-        γ_0_dil = get_line_parameter(q, ht_dil[:γ_0], vg_dil[:γ_0])
-        n_dil = get_line_parameter(q, ht_dil[:n], vg_dil[:n])
+        γ_0_dil = get_line_parameter(q, ht_dil.γ_0, vg_dil.γ_0)
+        n_dil = get_line_parameter(q, ht_dil.n, vg_dil.n)
         if (diluent_name == :self || n_dil == c_default_zero)
-            n_dil = get_line_parameter(q, q.lookup[:n_air])
+            n_dil = get_line_parameter(q, ind_air)
         end        
-        T_ref = (ht_dil[:γ_0] !== missing && ht_dil[:n] !== missing) ? T_ref_HT : c_T_ref        
+        T_ref = (ht_dil.γ_0 !== missing && ht_dil.n !== missing) ? T_ref_HT : c_T_ref        
         γ_0t = γ_collision_0(γ_0_dil, temperature, T_ref, pressure, 
             c_p_ref, n_dil)
         γ_0 += diluent_abundance * γ_0t        
 
         # Δ_0 contribution        
-        Δ_0_dil = get_line_parameter(q, ht_dil[:Δ_0], vg_dil[:Δ_0])
-        Δ_0p_dil = get_line_parameter(q, ht_dil[:Δ_0p], vg_dil[:Δ_0p])
-        T_ref = (ht_dil[:Δ_0] !== missing && ht_dil[:Δ_0p] !== missing) ? T_ref_HT : c_T_ref        
+        Δ_0_dil = get_line_parameter(q, ht_dil.Δ_0, vg_dil.Δ_0)
+        Δ_0p_dil = get_line_parameter(q, ht_dil.Δ_0p, vg_dil.Δ_0p)
+        T_ref = (ht_dil.Δ_0 !== missing && ht_dil.Δ_0p !== missing) ? T_ref_HT : c_T_ref        
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t
 
         # γ_2 contribution                
-        γ_2_dil = get_line_parameter(q, ht_dil[:γ_2])
+        γ_2_dil = get_line_parameter(q, ht_dil.γ_2)
         γ_2t = γ_2_dil * pressure / c_p_ref
         γ_2 += diluent_abundance * γ_2t
         
         #  Δ_2 contribution                
-        Δ_2_dil = get_line_parameter(q, ht_dil[:Δ_2])
+        Δ_2_dil = get_line_parameter(q, ht_dil.Δ_2)
         Δ_2t = Δ_2_dil * pressure / c_p_ref
         Δ_2 += diluent_abundance * Δ_2t
 
         # η contribution        
-        η_dil = get_line_parameter(q, ht_dil[:η])
+        η_dil = get_line_parameter(q, ht_dil.η)
         η += diluent_abundance * η_dil * (γ_2t - im * Δ_2t)
 
         # ν_VC contribution        
-        ν_VC_dil = get_line_parameter(q, ht_dil[:ν_VC])
-        κ_dil = get_line_parameter(q, ht_dil[:κ])
+        ν_VC_dil = get_line_parameter(q, ht_dil.ν_VC)
+        κ_dil = get_line_parameter(q, ht_dil.κ)
         ν_VC += diluent_abundance * ν_VC_dil * (T_ref / temperature)^κ_dil * pressure
         ν_VC -= η_dil * diluent_abundance * (γ_0t - im * Δ_0t)
     end    
@@ -496,6 +497,18 @@ end
 
 lookup_symbol(q::SQLite.Query, s1::Symbol) = s1 in keys(q.lookup) && !isa(Any, q.types[q.lookup[s1]]) ? q.lookup[s1] : missing
 
+struct HartmannTranDiluentIndizes
+    γ_0::Union{Missing, Int}
+    n::Union{Missing, Int}
+    Δ_0::Union{Missing, Int}
+    Δ_0p::Union{Missing, Int}
+    γ_2::Union{Missing, Int}
+    Δ_2::Union{Missing, Int}
+    η::Union{Missing, Int}
+    ν_VC::Union{Missing, Int}
+    κ::Union{Missing, Int}
+end
+
 function prepare_hartmann_tran_kwargs(;kwargs...)
     T = get(kwargs, :temperature, c_T_ref)
     diluent = get(kwargs, :diluent) do 
@@ -505,22 +518,22 @@ function prepare_hartmann_tran_kwargs(;kwargs...)
     q = get(kwargs, :query, nothing)    
 
     # prepare field names for diluents
-    fields = Dict{Symbol,Dict{Symbol,Union{Int,Missing}}}()
-
+    fields = Dict{Symbol,HartmannTranDiluentIndizes}()
+    #Dict{Symbol,Union{Int,Missing}}
     # get all diluent names    
     for diluent_name in get_diluent_names(diluent)
         # lookup fields
 
-        fields[diluent_name] = Dict(
-            :γ_0 => lookup_symbol(q, Symbol(@sprintf("gamma_HT_0_%s_%d", diluent_name, T_ht))),
-            :n => lookup_symbol(q, Symbol(@sprintf("n_HT_0_%s_%d", diluent_name, T_ht))),            
-            :Δ_0 => lookup_symbol(q, Symbol(@sprintf("delta_HT_0_%s_%d", diluent_name, T_ht))),            
-            :Δ_0p => lookup_symbol(q, Symbol(@sprintf("deltap_HT_0_%s_%d", diluent_name, T_ht))),            
-            :γ_2 => lookup_symbol(q, Symbol(@sprintf("gamma_HT_2_%s_%d", diluent_name, T_ht))),            
-            :Δ_2 => lookup_symbol(q, Symbol(@sprintf("delta_HT_2_%s_%d", diluent_name, T_ht))),
-            :η => lookup_symbol(q, Symbol(@sprintf("eta_HT_%s", diluent_name))),            
-            :ν_VC => lookup_symbol(q, Symbol(@sprintf("nu_HT_%s", diluent_name))),            
-            :κ => lookup_symbol(q, Symbol(@sprintf("kappa_HT_%s", diluent_name)))            
+        fields[diluent_name] = HartmannTranDiluentIndizes(
+            lookup_symbol(q, Symbol(@sprintf("gamma_HT_0_%s_%d", diluent_name, T_ht))),
+            lookup_symbol(q, Symbol(@sprintf("n_HT_0_%s_%d", diluent_name, T_ht))),            
+            lookup_symbol(q, Symbol(@sprintf("delta_HT_0_%s_%d", diluent_name, T_ht))),            
+            lookup_symbol(q, Symbol(@sprintf("deltap_HT_0_%s_%d", diluent_name, T_ht))),            
+            lookup_symbol(q, Symbol(@sprintf("gamma_HT_2_%s_%d", diluent_name, T_ht))),            
+            lookup_symbol(q, Symbol(@sprintf("delta_HT_2_%s_%d", diluent_name, T_ht))),
+            lookup_symbol(q, Symbol(@sprintf("eta_HT_%s", diluent_name))),            
+            lookup_symbol(q, Symbol(@sprintf("nu_HT_%s", diluent_name))),            
+            lookup_symbol(q, Symbol(@sprintf("kappa_HT_%s", diluent_name)))            
         )
     end
     voigt_args = prepare_voigt_kwargs(;kwargs...)    
@@ -532,28 +545,29 @@ function prepare_hartmann_tran_kwargs(;kwargs...)
 end
 
 voigt_profile!(
-    out::AbstractVector{T},
-    ν::AbstractVector{T},
-    ν_0::T,    
-    γ_D::T,
-    γ_0::T
-) where T <: AbstractFloat = hartmann_tran_profile!(out, ν, ν_0, 0. + im * 0., γ_D, γ_0, 0., 0., 0., 0. + im * 0.)
+    out,
+    ν,
+    ν_0,    
+    γ_D,
+    γ_0
+) = hartmann_tran_profile!(out, ν, ν_0, 0. + im * 0., γ_D, γ_0, 0., 0., 0., 0. + im * 0.)
 
 function voigt_lineshape(
-    q               :: SQLite.Query,
-    diluent         :: Dict{Symbol,T},
-    temperature     :: T,
-    pressure        :: T,
-    mass            :: T,        
-    ν               :: Union{AbstractRange,AbstractVector{T}},
-    ν_wing          :: T,
-    ν_wing_hw       :: T,
-    factor          :: T,
-    data            :: AbstractVector{T},
-    out_cache       :: AbstractVector{T},    
-    fields          :: Dict{Symbol, Dict{Symbol,Union{Int,Missing}}}    
-) where T <: AbstractFloat     
+    q,
+    diluent,
+    temperature,
+    pressure,
+    mass,        
+    ν,
+    ν_wing,
+    ν_wing_hw,
+    factor,
+    data,
+    out_cache,    
+    fields
+)     
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])
+    ind_air::Int = q.lookup[:n_air]
     # initialize lineshape specific parameters
     γ_D = γ_Doppler(temperature, ν_0, mass)
     γ_0 = Δ_0 = Float64(0.0)    
@@ -564,18 +578,18 @@ function voigt_lineshape(
         vg_dil = fields[diluent_name]
 
         # γ_0 contribution
-        γ_0_dil = get_line_parameter(q, vg_dil[:γ_0])        
-        n_dil = get_line_parameter(q, vg_dil[:n])        
+        γ_0_dil = get_line_parameter(q, vg_dil.γ_0)        
+        n_dil = get_line_parameter(q, vg_dil.n)        
         if (diluent_name == :self || n_dil == c_default_zero)
-            n_dil = get_line_parameter(q, q.lookup[:n_air])
+            n_dil = get_line_parameter(q, ind_air)
         end                
         γ_0t = γ_collision_0(γ_0_dil, temperature, c_T_ref, pressure, 
             c_p_ref, n_dil)
         γ_0 += diluent_abundance * γ_0t
 
         # Δ_0 contribution        
-        Δ_0_dil = get_line_parameter(q, vg_dil[:Δ_0])
-        Δ_0p_dil = get_line_parameter(q, vg_dil[:Δ_0p])                
+        Δ_0_dil = get_line_parameter(q, vg_dil.Δ_0)
+        Δ_0p_dil = get_line_parameter(q, vg_dil.Δ_0p) 
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t       
     end
@@ -593,6 +607,13 @@ function voigt_lineshape(
     end
 end
 
+struct VoigtDiluentIndizes
+    γ_0::Union{Missing, Int}
+    n::Union{Missing, Int}
+    Δ_0::Union{Missing, Int}
+    Δ_0p::Union{Missing, Int}
+end
+
 function prepare_voigt_kwargs(;kwargs...)        
     diluent = get(kwargs, :diluent) do 
         Dict()
@@ -600,13 +621,13 @@ function prepare_voigt_kwargs(;kwargs...)
     q = get(kwargs, :query, nothing)   
 
     # prepare field names for diluents
-    fields = Dict{Symbol,Dict{Symbol,Union{Int,Missing}}}()
+    fields = Dict{Symbol, VoigtDiluentIndizes}()
     for diluent_name in get_diluent_names(diluent)
-        fields[diluent_name] = Dict(            
-            :γ_0 => lookup_symbol(q, Symbol(@sprintf("gamma_%s", diluent_name))),
-            :n => lookup_symbol(q, Symbol(@sprintf("n_%s", diluent_name))),
-            :Δ_0 => lookup_symbol(q, Symbol(@sprintf("delta_%s", diluent_name))), 
-            :Δ_0p => lookup_symbol(q, Symbol(@sprintf("deltap_%s", diluent_name)))
+        fields[diluent_name] = VoigtDiluentIndizes(            
+            lookup_symbol(q, Symbol(@sprintf("gamma_%s", diluent_name))),
+            lookup_symbol(q, Symbol(@sprintf("n_%s", diluent_name))),
+            lookup_symbol(q, Symbol(@sprintf("delta_%s", diluent_name))), 
+            lookup_symbol(q, Symbol(@sprintf("deltap_%s", diluent_name)))
         )
     end
 
@@ -614,30 +635,31 @@ function prepare_voigt_kwargs(;kwargs...)
 end
 
 speed_dependent_voigt_profile!(
-    out::AbstractVector{T},
-    ν::AbstractVector{T},
-    ν_0::T,    
-    γ_D::T,
-    γ_0::T,
-    γ_2::T,
-    Δ_0::T       
- ) where T <: AbstractFloat = hartmann_tran_profile!(out, ν, ν_0, 0.0 + 0.0*im, γ_D, γ_0, γ_2, Δ_0, 0., 0.0 + 0.0*im)
+    out,
+    ν,
+    ν_0,    
+    γ_D,
+    γ_0,
+    γ_2,
+    Δ_0       
+ ) = hartmann_tran_profile!(out, ν, ν_0, 0.0 + 0.0*im, γ_D, γ_0, γ_2, Δ_0, 0., 0.0 + 0.0*im)
 
  function speed_dependent_voigt_lineshape(
-    q               :: SQLite.Query,
-    diluent         :: Dict{Symbol,T},
-    temperature     :: T,
-    pressure        :: T,
-    mass            :: T,        
-    ν               :: Union{AbstractRange,AbstractVector{T}},
-    ν_wing          :: T,
-    ν_wing_hw       :: T,
-    factor          :: T,
-    data            :: AbstractVector{T},
-    out_cache       :: AbstractVector{T},
-    fields          :: Dict{Symbol,Dict{Symbol,Union{Int,Missing}}}    
-) where T <: AbstractFloat     
+    q,
+    diluent,
+    temperature,
+    pressure,
+    mass,        
+    ν,
+    ν_wing,
+    ν_wing_hw,
+    factor,
+    data,
+    out_cache,
+    fields
+)
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])
+    ind_air::Int = q.lookup[:n_air]
     # initialize lineshape specific parameters
     γ_D = γ_Doppler(temperature, ν_0, mass)
     γ_0 = Δ_0 = γ_2 = Float64(0.0)    
@@ -648,23 +670,23 @@ speed_dependent_voigt_profile!(
         sd_dil = fields[diluent_name]    
 
         # γ_0 contribution
-        γ_0_dil = get_line_parameter(q, sd_dil[:γ_0])        
-        n_dil = get_line_parameter(q, sd_dil[:n])        
+        γ_0_dil = get_line_parameter(q, sd_dil.γ_0)
+        n_dil = get_line_parameter(q, sd_dil.n)
         if (diluent_name == :self || n_dil == c_default_zero)
-            n_dil = get_line_parameter(q, q.lookup[:n_air])
+            n_dil = get_line_parameter(q, ind_air)
         end                
         γ_0t = γ_collision_0(γ_0_dil, temperature, c_T_ref, pressure, 
             c_p_ref, n_dil)
         γ_0 += diluent_abundance * γ_0t
 
         # Δ_0 contribution        
-        Δ_0_dil = get_line_parameter(q, sd_dil[:Δ_0])
-        Δ_0p_dil = get_line_parameter(q, sd_dil[:Δ_0p])                
+        Δ_0_dil = get_line_parameter(q, sd_dil.Δ_0)
+        Δ_0p_dil = get_line_parameter(q, sd_dil.Δ_0p)
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t    
         
         # γ_2 contribution
-        γ_2_dil = get_line_parameter(q, sd_dil[:γ_2])
+        γ_2_dil = get_line_parameter(q, sd_dil.γ_2)
         γ_2t = γ_2_dil * pressure / c_p_ref
         γ_2 += diluent_abundance * γ_2t
     end
@@ -682,21 +704,29 @@ speed_dependent_voigt_profile!(
     end
 end
 
- function prepare_speed_dependent_voigt_kwargs(;kwargs...)        
+struct SpeedDependentVoigtDiluentIndizes
+    γ_0::Union{Missing, Int}
+    n::Union{Missing, Int}
+    Δ_0::Union{Missing, Int}
+    Δ_0p::Union{Missing, Int}
+    γ_2::Union{Missing, Int}
+end
+
+function prepare_speed_dependent_voigt_kwargs(;kwargs...)        
     diluent = get(kwargs, :diluent) do 
         Dict()
     end    
     q = get(kwargs, :query, nothing)    
 
     # prepare field names for diluents
-    fields = Dict{Symbol,Dict{Symbol,Union{Int,Missing}}}()
+    fields = Dict{Symbol, SpeedDependentVoigtDiluentIndizes}()
     for diluent_name in get_diluent_names(diluent)
-        fields[diluent_name] = Dict(            
-            :γ_0 => lookup_symbol(q, Symbol(@sprintf("gamma_%s", diluent_name))),
-            :n => lookup_symbol(q, Symbol(@sprintf("n_%s", diluent_name))),
-            :Δ_0 => lookup_symbol(q, Symbol(@sprintf("delta_%s", diluent_name))), 
-            :Δ_0p => lookup_symbol(q, Symbol(@sprintf("deltap_%s", diluent_name))),
-            :γ_2 => lookup_symbol(q, Symbol(@sprintf("sd_%s", diluent_name)))
+        fields[diluent_name] = SpeedDependentVoigtDiluentIndizes(            
+            lookup_symbol(q, Symbol(@sprintf("gamma_%s", diluent_name))),
+            lookup_symbol(q, Symbol(@sprintf("n_%s", diluent_name))),
+            lookup_symbol(q, Symbol(@sprintf("delta_%s", diluent_name))), 
+            lookup_symbol(q, Symbol(@sprintf("deltap_%s", diluent_name))),
+            lookup_symbol(q, Symbol(@sprintf("sd_%s", diluent_name)))
         )
     end
 
@@ -704,31 +734,32 @@ end
 end
 
 function lorentz_profile!(
-    out::AbstractVector{T},
-    ν::AbstractVector{T},
-    ν_0::T,
-    γ_0::T
-) where T <: AbstractFloat     
+    out,
+    ν,
+    ν_0,
+    γ_0
+)
     for i = 1:length(ν)
         out[i] = γ_0 / (π * (γ_0^2 + (ν[i] - ν_0)^2))
     end
 end
 
 function lorentz_lineshape(
-    q               :: SQLite.Query,
-    diluent         :: Dict{Symbol,T},
-    temperature     :: T,
-    pressure        :: T,
-    mass            :: T,        
-    ν               :: AbstractRange,
-    ν_wing          :: T,
-    ν_wing_hw       :: T,
-    factor          :: T,
-    data            :: AbstractVector{T},
-    out_cache       :: AbstractVector{T},
-    fields          :: Dict{Symbol,Dict{Symbol,Union{Int,Missing}}}
-) where T <: AbstractFloat     
+    q,
+    diluent,
+    temperature,
+    pressure,
+    mass, 
+    ν,
+    ν_wing,
+    ν_wing_hw,
+    factor,
+    data,
+    out_cache,
+    fields
+)
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])
+    ind_air::Int = q.lookup[:n_air]
     # initialize lineshape specific parameters        
     γ_0 = Δ_0 = Float64(0.0)        
 
@@ -737,18 +768,18 @@ function lorentz_lineshape(
         lor_dil = fields[diluent_name]
 
         # γ_0 contribution
-        γ_0_dil = get_line_parameter(q, lor_dil[:γ_0])        
-        n_dil = get_line_parameter(q, lor_dil[:n])        
+        γ_0_dil = get_line_parameter(q, lor_dil.γ_0)
+        n_dil = get_line_parameter(q, lor_dil.n)      
         if (diluent_name == :self || n_dil == c_default_zero)
-            n_dil = get_line_parameter(q, q.lookup[:n_air])
+            n_dil = get_line_parameter(q, ind_air)
         end                
         γ_0t = γ_collision_0(γ_0_dil, temperature, c_T_ref, pressure, 
             c_p_ref, n_dil)
         γ_0 += diluent_abundance * γ_0t
 
         # Δ_0 contribution        
-        Δ_0_dil = get_line_parameter(q, lor_dil[:Δ_0])
-        Δ_0p_dil = get_line_parameter(q, lor_dil[:Δ_0p])                
+        Δ_0_dil = get_line_parameter(q, lor_dil.Δ_0)
+        Δ_0p_dil = get_line_parameter(q, lor_dil.Δ_0p)
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t
     end
@@ -767,29 +798,29 @@ function lorentz_lineshape(
 end
 
 function gauss_profile!(
-    out::AbstractVector{T},
-    ν::AbstractVector{T},
-    ν_0::T,
-    γ_D::T    
-) where T <: AbstractFloat
+    out,
+    ν,
+    ν_0,
+    γ_D
+)
     for i = 1:length(ν)
         out[i] = √(c_log2 / π) / γ_D * exp(-c_log2 * ((ν[i] - ν_0) / γ_D)^2)  
     end
 end
 
 function gauss_lineshape(
-    q               :: SQLite.Query,
-                    :: Dict{Symbol,T},
-    temperature     :: T,
-    pressure        :: T,
-    mass            :: T,        
-    ν               :: Union{AbstractRange,AbstractVector{T}},
-    ν_wing          :: T,
-    ν_wing_hw       :: T,
-    factor          :: T,
-    data            :: AbstractVector{T},
-    out_cache       :: AbstractVector{T}                    
-) where T <: AbstractFloat           
+    q,
+    diluent,
+    temperature,
+    pressure,
+    mass,
+    ν,
+    ν_wing,
+    ν_wing_hw,
+    factor,
+    data,
+    out_cache
+)
     # initialize lineshape specific parameters    
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])
     γ_D = γ_Doppler(temperature, ν_0, mass)
