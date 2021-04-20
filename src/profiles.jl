@@ -497,7 +497,7 @@ end
 
 lookup_symbol(q::SQLite.Query, s1::Symbol) = s1 in keys(q.lookup) && !isa(Any, q.types[q.lookup[s1]]) ? q.lookup[s1] : missing
 
-struct HartmannTranDiluentIndizes
+struct HartmannTranDiluentIndices
     γ_0::Union{Missing, Int}
     n::Union{Missing, Int}
     Δ_0::Union{Missing, Int}
@@ -518,13 +518,13 @@ function prepare_hartmann_tran_kwargs(;kwargs...)
     q = get(kwargs, :query, nothing)    
 
     # prepare field names for diluents
-    fields = Dict{Symbol,HartmannTranDiluentIndizes}()
+    fields = Dict{Symbol,HartmannTranDiluentIndices}()
     #Dict{Symbol,Union{Int,Missing}}
     # get all diluent names    
     for diluent_name in get_diluent_names(diluent)
         # lookup fields
 
-        fields[diluent_name] = HartmannTranDiluentIndizes(
+        fields[diluent_name] = HartmannTranDiluentIndices(
             lookup_symbol(q, Symbol(@sprintf("gamma_HT_0_%s_%d", diluent_name, T_ht))),
             lookup_symbol(q, Symbol(@sprintf("n_HT_0_%s_%d", diluent_name, T_ht))),            
             lookup_symbol(q, Symbol(@sprintf("delta_HT_0_%s_%d", diluent_name, T_ht))),            
@@ -607,7 +607,7 @@ function voigt_lineshape(
     end
 end
 
-struct VoigtDiluentIndizes
+struct VoigtDiluentIndices
     γ_0::Union{Missing, Int}
     n::Union{Missing, Int}
     Δ_0::Union{Missing, Int}
@@ -621,9 +621,9 @@ function prepare_voigt_kwargs(;kwargs...)
     q = get(kwargs, :query, nothing)   
 
     # prepare field names for diluents
-    fields = Dict{Symbol, VoigtDiluentIndizes}()
+    fields = Dict{Symbol, VoigtDiluentIndices}()
     for diluent_name in get_diluent_names(diluent)
-        fields[diluent_name] = VoigtDiluentIndizes(            
+        fields[diluent_name] = VoigtDiluentIndices(            
             lookup_symbol(q, Symbol(@sprintf("gamma_%s", diluent_name))),
             lookup_symbol(q, Symbol(@sprintf("n_%s", diluent_name))),
             lookup_symbol(q, Symbol(@sprintf("delta_%s", diluent_name))), 
@@ -704,7 +704,7 @@ speed_dependent_voigt_profile!(
     end
 end
 
-struct SpeedDependentVoigtDiluentIndizes
+struct SpeedDependentVoigtDiluentIndices
     γ_0::Union{Missing, Int}
     n::Union{Missing, Int}
     Δ_0::Union{Missing, Int}
@@ -719,9 +719,9 @@ function prepare_speed_dependent_voigt_kwargs(;kwargs...)
     q = get(kwargs, :query, nothing)    
 
     # prepare field names for diluents
-    fields = Dict{Symbol, SpeedDependentVoigtDiluentIndizes}()
+    fields = Dict{Symbol, SpeedDependentVoigtDiluentIndices}()
     for diluent_name in get_diluent_names(diluent)
-        fields[diluent_name] = SpeedDependentVoigtDiluentIndizes(            
+        fields[diluent_name] = SpeedDependentVoigtDiluentIndices(            
             lookup_symbol(q, Symbol(@sprintf("gamma_%s", diluent_name))),
             lookup_symbol(q, Symbol(@sprintf("n_%s", diluent_name))),
             lookup_symbol(q, Symbol(@sprintf("delta_%s", diluent_name))), 
