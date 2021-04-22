@@ -1,7 +1,7 @@
 name = "HITRAN"
 uuid = "4efdbe67-70aa-4c87-84c0-bc59a9addc1a"
 authors = ["Oliver Kliebisch <oliver@kliebisch.net>"]
-version = "0.2.6"
+version = "0.2.7"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
