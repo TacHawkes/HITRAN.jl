@@ -344,7 +344,6 @@ end
 function hartmann_tran_profile!(
     out,
     ν,
-    factor,
     ν_0,
     ν_VC,
     γ_D,
@@ -352,7 +351,8 @@ function hartmann_tran_profile!(
     γ_2,
     Δ_0,
     Δ_2,
-    η
+    η,
+    factor=1.0
 )
     C_0 = γ_0 + im * Δ_0
     C_2 = γ_2 + im * Δ_2
@@ -495,7 +495,7 @@ function hartmann_tran_lineshape(
     ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
     ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)        
 
-    hartmann_tran_profile!(@view(data[ind_lo:ind_hi]), @view(ν[ind_lo:ind_hi]), factor, ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, η)
+    hartmann_tran_profile!(@view(data[ind_lo:ind_hi]), @view(ν[ind_lo:ind_hi]), ν_0, ν_VC, γ_D, γ_0, γ_2, Δ_0, Δ_2, η, factor)
 end
 
 lookup_symbol(q::SQLite.Query, s1::Symbol) = s1 in keys(q.lookup) && !isa(Any, q.types[q.lookup[s1]]) ? q.lookup[s1] : missing
@@ -550,11 +550,11 @@ end
 voigt_profile!(
     out,
     ν,
-    factor,
     ν_0,    
     γ_D,
-    γ_0
-) = hartmann_tran_profile!(out, ν, factor, ν_0, 0. + im * 0., γ_D, γ_0, 0., 0., 0., 0. + im * 0.)
+    γ_0,
+    factor=1.0
+) = hartmann_tran_profile!(out, ν, ν_0, 0. + im * 0., γ_D, γ_0, 0., 0., 0., 0. + im * 0., factor)
 
 function voigt_lineshape(
     q,
@@ -604,7 +604,7 @@ function voigt_lineshape(
     ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
     ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)  
 
-    voigt_profile!(@view(data[ind_lo:ind_hi]), @view(ν[ind_lo:ind_hi]), factor, ν_0 + Δ_0, γ_D, γ_0)    
+    voigt_profile!(@view(data[ind_lo:ind_hi]), @view(ν[ind_lo:ind_hi]), ν_0 + Δ_0, γ_D, γ_0, factor)    
 end
 
 struct VoigtDiluentIndices
@@ -636,14 +636,14 @@ end
 
 speed_dependent_voigt_profile!(
     out,
-    ν,
-    factor,
+    ν,    
     ν_0,    
     γ_D,
     γ_0,
     γ_2,
-    Δ_0       
- ) = hartmann_tran_profile!(out, ν, factor, ν_0, 0.0 + 0.0*im, γ_D, γ_0, γ_2, Δ_0, 0., 0.0 + 0.0*im)
+    Δ_0,
+    factor=1.0
+ ) = hartmann_tran_profile!(out, ν, ν_0, 0.0 + 0.0*im, γ_D, γ_0, γ_2, Δ_0, 0., 0.0 + 0.0*im, factor)
 
  function speed_dependent_voigt_lineshape(
     q,
@@ -698,7 +698,7 @@ speed_dependent_voigt_profile!(
     ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
     ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)  
 
-    speed_dependent_voigt_profile!(@view(data[ind_lo:ind_hi]), @view(ν[ind_lo:ind_hi]), factor, ν_0, γ_D, γ_0, γ_2, Δ_0)    
+    speed_dependent_voigt_profile!(@view(data[ind_lo:ind_hi]), @view(ν[ind_lo:ind_hi]), ν_0, γ_D, γ_0, γ_2, Δ_0, factor)    
 end
 
 struct SpeedDependentVoigtDiluentIndices
@@ -732,10 +732,10 @@ end
 
 function lorentz_profile!(
     out,
-    ν,
-    factor,
+    ν,    
     ν_0,
-    γ_0
+    γ_0,
+    factor=1.0
 )
     @inbounds @simd for i = 1:length(ν)
         out[i] += factor * γ_0 / (π * (γ_0^2 + (ν[i] - ν_0)^2))
@@ -788,15 +788,15 @@ function lorentz_lineshape(
     ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
     ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)  
 
-    lorentz_profile!(@view(data[ind_lo:ind_hi]), @view(ν[ind_lo:ind_hi]), factor, ν_0 + Δ_0, γ_0)    
+    lorentz_profile!(@view(data[ind_lo:ind_hi]), @view(ν[ind_lo:ind_hi]), ν_0 + Δ_0, γ_0, factor)    
 end
 
 function gauss_profile!(
     out,
-    ν,
-    factor,
+    ν,    
     ν_0,
-    γ_D
+    γ_D,
+    factor=1.0
 )
     @inbounds @simd for i = 1:length(ν)
         out[i] += factor * √(c_log2 / π) / γ_D * exp(-c_log2 * ((ν[i] - ν_0) / γ_D)^2)  
@@ -826,7 +826,7 @@ function gauss_lineshape(
     ind_lo = searchsortedfirst(ν, ν_0 - ν_wing_val)
     ind_hi = searchsortedlast(ν, ν_0 + ν_wing_val)
 
-    gauss_profile!(@view(data[ind_lo:ind_hi]), @view(ν[ind_lo:ind_hi]), factor, ν_0 + Δ_0, γ_D)    
+    gauss_profile!(@view(data[ind_lo:ind_hi]), @view(ν[ind_lo:ind_hi]), ν_0 + Δ_0, γ_D, factor)    
 end
 
 const profile_map = (
