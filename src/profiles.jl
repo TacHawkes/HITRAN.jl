@@ -247,8 +247,7 @@ function α(
     molar_masses        
 ) 
     # allocate output    
-    data = zeros(length(ν))
-    data_cache = zeros(length(ν))
+    data = zeros(length(ν))    
 
     # lineshape function
     lineshape::Function = lineshape_map[profile]
@@ -296,7 +295,15 @@ function α(
             end
 
             # environment adjusted line intensity
-            S_ij = Sij_T(getvalue(result, ind_sw, Float64), temperature, c_T_ref, q_t, q_t_ref, getvalue(result, ind_elower, Float64), getvalue(result, ind_nu, Float64))            
+            S_ij = Sij_T(
+                getvalue(result, ind_sw, Float64),
+                temperature,
+                c_T_ref,
+                q_t,
+                q_t_ref,
+                getvalue(result, ind_elower, Float64),
+                getvalue(result, ind_nu, Float64)
+            )
             
             # skip weak lines
             if S_ij < intensity_threshold
@@ -316,8 +323,7 @@ function α(
                 ν_wing,
                 ν_wing_hw,
                 factor,
-                data,
-                data_cache,
+                data,                
                 profile_args...)            
         end        
     end
@@ -421,8 +427,7 @@ function hartmann_tran_lineshape(
     ν_wing,
     ν_wing_hw,
     factor,
-    data,
-    out_cache,
+    data,    
     T_ref_HT,
     fields,
     voigt_fields
@@ -561,8 +566,7 @@ function voigt_lineshape(
     ν_wing,
     ν_wing_hw,
     factor,
-    data,
-    out_cache,    
+    data,    
     fields
 )     
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])
@@ -651,8 +655,7 @@ speed_dependent_voigt_profile!(
     ν_wing,
     ν_wing_hw,
     factor,
-    data,
-    out_cache,
+    data,    
     fields
 )
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])
@@ -749,8 +752,7 @@ function lorentz_lineshape(
     ν_wing,
     ν_wing_hw,
     factor,
-    data,
-    out_cache,
+    data,    
     fields
 )
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])
@@ -811,8 +813,7 @@ function gauss_lineshape(
     ν_wing,
     ν_wing_hw,
     factor,
-    data,
-    out_cache
+    data    
 )
     # initialize lineshape specific parameters    
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])

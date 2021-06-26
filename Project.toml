@@ -4,18 +4,14 @@ authors = ["Oliver Kliebisch <oliver@kliebisch.net>"]
 version = "0.2.8"
 
 [deps]
-BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
-Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PooledArrays = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
-Profile = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
-Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
