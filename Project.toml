@@ -22,7 +22,7 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [compat]
 CSV = "0.8"
-DSP = "0.6"
+DSP = "0.6, 0.7"
 DataFrames = "0.22, 1.0"
 Downloads = "1.3"
 FileIO = "1.4"
