@@ -362,15 +362,17 @@ function hartmann_tran_profile!(
     C_2 = γ_2 + im * Δ_2
     C_0t = (1.0 - η) * (C_0 - 3.0*C_2 / 2.) + ν_VC
     C_2t = (1.0 - η) * C_2
-    ν_a0 = c_c_SI * γ_D / (√(c_log2) * ν_0)
-        
+    ν_a0 = c_c_SI * γ_D / (√(c_log2) * ν_0)   
+    
+    c_ν = √π * c_c_SI /ν_0
+    
     if (abs(C_2t) ≈ 0.)                
         for i = 1:length(ν)
             Z_m = (im * (ν_0 - ν[i]) + C_0t) / (ν_0 * ν_a0 / c_c_SI)
             wofz_Z_m = wofz(im * Z_m)      
-            A_ν = √(π) * c_c_SI / ν_0 / ν_a0 * wofz_Z_m       
-            B_ν = √(π) * c_c_SI * ν_a0 / ν_0 * ((1.0 - Z_m^2.) * wofz_Z_m + Z_m / √(π))
-            out[i] += factor / π * real(A_ν / (1.0 - (ν_VC - η * (C_0 - 3.0*C_2 / 2.0) * A_ν + (η * C_2 / ν_a0^2.0) * B_ν)))
+            A_ν = c_ν / ν_a0 * wofz_Z_m       
+            B_ν = c_ν * ν_a0 * ((1.0 - Z_m^2.) * wofz_Z_m + Z_m / √(π))            
+            @inbounds out[i] += factor / π * real(A_ν / (1.0 - (ν_VC - η * (C_0 - 3.0*C_2 / 2.0) * A_ν + (η * C_2 / ν_a0^2.0) * B_ν)))
         end        
     else
         Y = (ν_0 * ν_a0 / 2. / c_c_SI / C_2t)^2
@@ -383,8 +385,8 @@ function hartmann_tran_profile!(
             wofz_Z_p = wofz(im * Z_p)      
 
             A_ν = √(π) * c_c_SI / ν_0 / ν_a0 * (wofz_Z_m - wofz_Z_p)
-            B_ν = ν_a0^2 / C_2t^2 * (-1. + √(π) / 2. / √(Y) * (1. - Z_m^2.) * wofz_Z_m - √(π) / 2. / √(Y) * (1. - Z_p^2.) * wofz_Z_p)        
-            out[i] += factor / π * real(A_ν / (1. - (ν_VC - η * (C_0 - 3. * C_2 / 2.) * A_ν + (η * C_2 / ν_a0^2.) * B_ν)))
+            B_ν = ν_a0^2 / C_2t^2 * (-1. + √(π) / 2. / √(Y) * (1. - Z_m^2.) * wofz_Z_m - √(π) / 2. / √(Y) * (1. - Z_p^2.) * wofz_Z_p)            
+            @inbounds out[i] += factor / π * real(A_ν / (1. - (ν_VC - η * (C_0 - 3. * C_2 / 2.) * A_ν + (η * C_2 / ν_a0^2.) * B_ν)))
         end
     end
 end
