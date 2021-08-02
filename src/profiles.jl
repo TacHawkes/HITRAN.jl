@@ -364,10 +364,10 @@ function hartmann_tran_profile!(
     C_2t = (1.0 - η) * C_2
     ν_a0 = c_c_SI * γ_D / (√(c_log2) * ν_0)   
     
-    c_ν = √π * c_c_SI /ν_0
+    c_ν = √π * c_c_SI / ν_0
     
     if (abs(C_2t) ≈ 0.)                
-        for i = 1:length(ν)
+        Threads.@threads for i = 1:length(ν)
             Z_m = (im * (ν_0 - ν[i]) + C_0t) / (ν_0 * ν_a0 / c_c_SI)
             wofz_Z_m = wofz(im * Z_m)      
             A_ν = c_ν / ν_a0 * wofz_Z_m       
@@ -376,7 +376,7 @@ function hartmann_tran_profile!(
         end        
     else
         Y = (ν_0 * ν_a0 / 2. / c_c_SI / C_2t)^2
-        for i = 1:length(ν)
+        Threads.@threads for i = 1:length(ν)
             X = (im * (ν_0 - ν[i]) + C_0t) / C_2t        
             Z_p = √(X + Y) + √(Y) 
             Z_m = √(X + Y) - √(Y)
