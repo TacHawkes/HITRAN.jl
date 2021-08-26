@@ -67,7 +67,7 @@ push!(molecules,
     (47, "SO3", "Sulfur trioxide"),
     (48, "C2N2", "Cyanogen"),
     (49, "COCl2", "Phosgene"),
-    (53, "CS2", "Carbon disulfide"),
+	(53, "CS2", "Carbon disulfide"),
 	(55, "NF3", "Nitrogen trifluoride")
 )
 

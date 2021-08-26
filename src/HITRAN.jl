@@ -1,11 +1,12 @@
 module HITRAN
 
-using Printf
 using CSV
 using Downloads
 using DSP
 using FileIO
 using JLD2
+using Polyester
+using Printf
 using SHA
 using SpecialFunctions
 using SQLite
