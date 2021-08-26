@@ -67,7 +67,8 @@ push!(molecules,
     (47, "SO3", "Sulfur trioxide"),
     (48, "C2N2", "Cyanogen"),
     (49, "COCl2", "Phosgene"),
-    (53, "CS2", "Carbon disulfide")
+    (53, "CS2", "Carbon disulfide"),
+	(55, "NF3", "Nitrogen trifluoride")
 )
 
 const isotopologues = DataFrame(
@@ -314,4 +315,7 @@ push!(isotopologues,
 	(53, 132, 2, "32S12C34S", 224, 0.079260, 77.93994, 2798.00, 1),
 	(53, 133, 3, "32S12C33S", 223, 0.014094, 76.943256, 1107.00, 4),
 	(53, 134, 4, "13C32S2", 232, 0.010310, 76.947495, 2739.70, 2),
+
+	# 55: NF3
+	(55, 136, 1, "14N19F3", 4999, 0.996337, 70.998284, 3.46e5, 3)
 )
