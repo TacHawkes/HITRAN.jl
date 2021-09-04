@@ -23,17 +23,21 @@ using Test
         @test isapprox(absorption_spectrum([0.], 1)[1], 0.0)
         @test isapprox(transmittance_spectrum([0.], 1)[1], 1.0)
         @test isapprox(optical_depth([0.], 1)[1], 0.0)
-    end
-
-    @testset "Water saturation pressure" begin
-        @test isapprox(HITRAN.p_s_h2o(273.15), 611.2911778902558)
-    end
+    end    
 
     @testset "Instrument functions" begin
         x = -10:0.001:10
         for (s, fn) in HITRAN.instrument_functions
             @test isapprox(sum(fn(x, 0.1)*0.001), 1, atol=1e-2)
         end        
+    end
+
+    @testset "Environments" begin
+        @test isapprox(HITRAN.p_s_h2o(273.15), 611.2911778902558)
+        @test isapprox(HITRAN.kelvin_to_celsius(273.15), 0) 
+        @test isapprox(HITRAN.celsius_to_kelvin(0), 273.15)
+        @test_nowarn moist_air(100)
+        @test_nowarn moist_air(100, HITRAN.c_p_ref, 240.0)
     end
 
     @testset "Utility" begin
