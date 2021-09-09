@@ -18,7 +18,7 @@ SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [compat]
-CSV = "0.8"
+CSV = "0.8, 0.9"
 DSP = "0.6, 0.7"
 DataFrames = "0.22, 1.0"
 Downloads = "1.3"
