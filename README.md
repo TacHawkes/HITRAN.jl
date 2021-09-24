@@ -6,7 +6,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4653317.svg)](https://doi.org/10.5281/zenodo.4653317)
 
 HITRAN.jl is a Julia package for calculating spectral features using the HITRAN database. The package follows a very similar approach to the [HITRAN Application Programming Interface (HAPI)](https://github.com/hitranonline/hapi). In fact the basic workflow and methods work almost the same which should make switching for HAPI users easy.
-The package fetches spectral line data from [HITRANOnline](https://hitran.org) and stores it in a local SQLite database for structured access. This data can be used to calculate spectral lineshapes while taking into account the gas mixture and environmetal conditions (pressure, temperature).
+The package fetches spectral line data from [HITRANOnline](https://hitran.org) and stores it in a local SQLite database for structured access. This data can be used to calculate spectral lineshapes while taking into account the gas mixture and environmental conditions (pressure, temperature).
 
 ## Documentation
 

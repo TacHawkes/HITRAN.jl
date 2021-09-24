@@ -1,15 +1,15 @@
 using DataFrames
 
 function molar_mass(MI)
-	sql = "	SELECT 	molar_mass
+	sql = "	SELECT 	molecule_id, local_id, molar_mass
 			FROM	isotopologues
 			WHERE 	(molecule_id, local_id)
 			IN 		(VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in MI], ',') * ")"			
 	result = query_local_db(sql, [i for t in MI for i in t])
 	
-	out = Float64[]
+	out = Dict{Tuple{Int, Int}, Float64}()
 	for row in result
-		push!(out, row.molar_mass)
+		out[(row.molecule_id, row.local_id)] = row.molar_mass		
 	end
 	
 	return out
