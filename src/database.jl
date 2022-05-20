@@ -14,6 +14,8 @@ function current_db()
 end
 current_db(db::SQLite.DB) = (CURRENT_DB.cur_db = db)
 
+@inline table_names(db::SQLite.DB) = [t.name for t in SQLite.tables(db)]
+
 """
     open_database(file_path::String)
 
@@ -24,14 +26,14 @@ function open_database(file_path::String)
     db = SQLite.DB(file_path)
 
     # create default tables if this as a new database for select/filter queries           
-    tables = SQLite.tables(db)
-    if (haskey(tables, :name) == false || "molecules" ∉ tables[:name])        
+    tables = table_names(db)
+    if  "molecules" ∉ tables
         SQLite.load!(molecules, db, "molecules")
     end
-    if (haskey(tables, :name) == false || "isotopologues" ∉ tables[:name])        
+    if "isotopologues" ∉ tables
         SQLite.load!(isotopologues, db, "isotopologues")
     end
-    if (haskey(tables, :name) == false || "table_hashes" ∉ tables[:name])        
+    if "table_hashes" ∉ tables
         DBInterface.execute(db, 
             "CREATE TABLE table_hashes (
                 table_name TEXT UNIQUE,
@@ -57,7 +59,7 @@ function fetch!(
     
     url = build_request_url!(global_ids, ν_min, ν_max, parameters)
     # check if this is a duplicate request
-    if (name in SQLite.tables(db)[:name])
+    if (name in table_names(db))
         result = DBInterface.execute(db,
             "SELECT query_hash
             FROM    table_hashes
