@@ -76,7 +76,7 @@ function fetch!(
 
     df = download_HITRAN(url, parameters)
 
-    if (name in SQLite.tables(db)[:name])
+    if (name in table_names(db))
         SQLite.drop!(db, name)
     end
     SQLite.load!(df, db, name)
