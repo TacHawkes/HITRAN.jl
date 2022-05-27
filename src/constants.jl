@@ -1,13 +1,13 @@
 # HITRAN constants
 
 # reference temperature [K]
-const c_T_ref = 296.
+const c_T_ref = 296.0
 
 # reference pressure [atm]
-const c_p_ref = 1.
+const c_p_ref = 1.0
 
 # conversion factor atm to Pa
-const c_atm_factor = 101325.
+const c_atm_factor = 101325.0
 
 #= 
 Hartmann-Tran reference temperatures for line parameters
@@ -18,16 +18,15 @@ Reference:
     database: H2 case study. J Quant Spectrosc Radiat Transf 2016;177:75–91.
     http://dx.doi.org/10.1016/j.jqsrt.2016.01.024. 
 =#
-const c_HT_T_ref = Base.ImmutableDict(
-    (0., 100.) => 50.,
-    (100., 200.) => 150.,
-    (200., 400.) => 296.,
-    (400., Inf) => 700.)
+const c_HT_T_ref = Base.ImmutableDict((0.0, 100.0) => 50.0,
+                                      (100.0, 200.0) => 150.0,
+                                      (200.0, 400.0) => 296.0,
+                                      (400.0, Inf) => 700.0)
 
 ## SI constants according to CODATA2018
 
 # speed of light in m/s (SI)
-const c_c_SI = 299792458.
+const c_c_SI = 299792458.0
 
 # Avogrado constant (dimensionless) (SI)
 const c_NA_SI = 6.02214076e23
@@ -39,10 +38,10 @@ const c_kB_SI = 1.380649e-23
 const c_h_SI = 6.62607015e-34
 
 # c2 = hc/k (cgs units)
-const c_c2 = 1e2*c_h_SI * c_c_SI / c_kB_SI
+const c_c2 = 1e2 * c_h_SI * c_c_SI / c_kB_SI
 
 # natural log of 2
-const c_log2 = log(2.)
+const c_log2 = log(2.0)
 
 ### profile constants
 const c_default_zero = zero(Float64)
@@ -77,8 +76,8 @@ Climatology 57, 6 (2018): 1265-1272
 
 const c_a = 43.494
 const c_b = 6545.8
-const c_d1 = 278.
-const c_d2 = 868.
+const c_d1 = 278.0
+const c_d2 = 868.0
 
 const c_α = 1.00062
 const c_β = 3.14e-8

@@ -19,27 +19,26 @@ current_db(db::SQLite.DB) = (CURRENT_DB.cur_db = db)
 """
     open_database(file_path::String)
 
-Opens the SQLite database at the given file path and sets it as the current database. 
+Opens the SQLite database at the given file path and sets it as the current database.
 Only use this if you want to use multiple different database.
 """
 function open_database(file_path::String)
     db = SQLite.DB(file_path)
 
-    # create default tables if this as a new database for select/filter queries           
+    # create default tables if this as a new database for select/filter queries
     tables = table_names(db)
-    if  "molecules" ∉ tables
+    if "molecules" ∉ tables
         SQLite.load!(molecules, db, "molecules")
     end
     if "isotopologues" ∉ tables
         SQLite.load!(isotopologues, db, "isotopologues")
     end
     if "table_hashes" ∉ tables
-        DBInterface.execute(db, 
-            "CREATE TABLE table_hashes (
-                table_name TEXT UNIQUE,
-                query_hash TEXT
-            )"
-        )
+        DBInterface.execute(db,
+                            "CREATE TABLE table_hashes (
+                                table_name TEXT UNIQUE,
+                                query_hash TEXT
+                            )")
     end
 
     current_db(db)
@@ -47,27 +46,25 @@ function open_database(file_path::String)
     return db
 end
 
-function fetch!(
-    db              :: SQLite.DB,
-    name            :: String,
-    global_ids      :: Union{T, AbstractVector{T}},
-    ν_min           :: Number,
-    ν_max           :: Number,
-    parameters      :: AbstractArray{String}
-) where T <: Integer
+function fetch!(db::SQLite.DB,
+                name::String,
+                global_ids::Union{T, AbstractVector{T}},
+                ν_min::Number,
+                ν_max::Number,
+                parameters::AbstractArray{String};
+                force::Bool = false) where {T <: Integer}
     global_ids = unique(global_ids)
-    
+
     url = build_request_url!(global_ids, ν_min, ν_max, parameters)
     # check if this is a duplicate request
-    if (name in table_names(db))
+    if !force && name in table_names(db)
         result = DBInterface.execute(db,
-            "SELECT query_hash
-            FROM    table_hashes
-            WHERE   table_name=?",
-            [name]
-        ) |> DataFrame
+                                     "SELECT query_hash
+                                     FROM    table_hashes
+                                     WHERE   table_name=?",
+                                     [name]) |> DataFrame
         if size(result)[1] >= 1
-            if bytes2hex(sha2_512(url)) == result[1,:query_hash]
+            if bytes2hex(sha2_512(url)) == result[1, :query_hash]
                 # identical query, skip this fetch command
                 return
             end
@@ -75,6 +72,7 @@ function fetch!(
     end
 
     df = download_HITRAN(url, parameters)
+    println(length(df))
 
     if (name in table_names(db))
         SQLite.drop!(db, name)
@@ -82,8 +80,9 @@ function fetch!(
     SQLite.load!(df, db, name)
 
     # update hash
-    DBInterface.execute(db, "REPLACE INTO table_hashes VALUES (?, ?)", [name, bytes2hex(sha2_512(url))])
-    
+    DBInterface.execute(db, "REPLACE INTO table_hashes VALUES (?, ?)",
+                        [name, bytes2hex(sha2_512(url))])
+
     nothing
 end
 
@@ -99,55 +98,60 @@ given by `name`. If the table with the given parameters already exists, no data 
 - `global_ids`: The global isotopologue ids to consider. You can also provide a tuple (or an array of tuples) with `molecule_id`, `local_id` as identifiers
 - `ν_min`: The minimum wavenumber in ``cm^{-1}`` to consider
 - `ν_max`: The minimum wavenumber in ``cm^{-1}`` to consider
-- `parameters`: A list of parameters to fetch. You can use parameter groups using Symbols as shortcuts, e.g. :standard for all HITRAN standard parameters. 
+- `parameters`: A list of parameters to fetch. You can use parameter groups using Symbols as shortcuts, e.g. :standard for all HITRAN standard parameters.
 """
-fetch!(    
-    name            :: String,
-    global_ids      :: Union{T, AbstractVector{T}},
-    ν_min           :: Number,
-    ν_max           :: Number,
-    parameters      :: AbstractArray{String}
-) where {T <: Integer} = fetch!(current_db(), name, global_ids, ν_min, ν_max, parameters)
+function fetch!(name::String,
+                global_ids::Union{T, AbstractVector{T}},
+                ν_min::Number,
+                ν_max::Number,
+                parameters::AbstractArray{String};
+                force::Bool = true) where {T <: Integer}
+    fetch!(current_db(), name, global_ids, ν_min, ν_max, parameters; force)
+end
 
-function fetch!(
-    db              :: SQLite.DB,
-    name            :: String,
-    global_ids      :: Union{T, AbstractVector{T}},
-    ν_min           :: Number,
-    ν_max           :: Number,
-    parameters      :: Union{Symbol, AbstractVector{Symbol}}=:standard
-) where T <: Integer
+function fetch!(db::SQLite.DB,
+                name::String,
+                global_ids::Union{T, AbstractVector{T}},
+                ν_min::Number,
+                ν_max::Number,
+                parameters::Union{Symbol, AbstractVector{Symbol}} = :standard;
+                force::Bool = true) where {T <: Integer}
     if isa(parameters, AbstractArray)
         parameters = merge_groups(:standard, parameters...)
     else
         parameters = merge_groups(:standard, parameters)
     end
-    fetch!(db, name, global_ids, ν_min, ν_max, parameters)
+    fetch!(db, name, global_ids, ν_min, ν_max, parameters; force)
 end
 
-fetch!(    
-    name            :: String,
-    global_ids      :: Union{T, AbstractVector{T}},
-    ν_min           :: Number,
-    ν_max           :: Number,
-    parameters      :: Union{Symbol, AbstractVector{Symbol}}=:standard
-) where {T <: Integer} = fetch!(current_db(), name, global_ids, ν_min, ν_max, parameters)
+function fetch!(name::String,
+                global_ids::Union{T, AbstractVector{T}},
+                ν_min::Number,
+                ν_max::Number,
+                parameters::Union{Symbol, AbstractVector{Symbol}} = :standard;
+                force::Bool = true) where {T <: Integer}
+    fetch!(current_db(), name, global_ids, ν_min, ν_max, parameters; force)
+end
 
-fetch!(
-    name            :: String,
-    global_ids      :: Tuple{T, T},
-    ν_min           :: Number,
-    ν_max           :: Number,
-    parameters      :: Union{Symbol, AbstractVector{Symbol}}=:standard
-) where {T <: Integer} = fetch!(current_db(), name, iso_id(global_ids...),ν_min, ν_max, parameters)
+function fetch!(name::String,
+                global_ids::Tuple{T, T},
+                ν_min::Number,
+                ν_max::Number,
+                parameters::Union{Symbol, AbstractVector{Symbol}} = :standard;
+                force::Bool = true) where {T <: Integer}
+    fetch!(current_db(), name, iso_id(global_ids...), ν_min, ν_max, parameters; force)
+end
 
-fetch!(
-    name            :: String,
-    global_ids      :: AbstractArray{Tuple{T, T}, 1},
-    ν_min           :: Number,
-    ν_max           :: Number,
-    parameters      :: Union{Symbol, AbstractVector{Symbol}}=:standard
-) where T <: Integer = fetch!(current_db(), name, iso_id([i[1] for i in global_ids], [i[2] for i in global_ids]),ν_min, ν_max, parameters)
+function fetch!(name::String,
+                global_ids::AbstractArray{Tuple{T, T}, 1},
+                ν_min::Number,
+                ν_max::Number,
+                parameters::Union{Symbol, AbstractVector{Symbol}} = :standard;
+                force::Bool = true) where {T <: Integer}
+    fetch!(current_db(), name,
+           iso_id([i[1] for i in global_ids], [i[2] for i in global_ids]), ν_min, ν_max,
+           parameters; force)
+end
 
 """
     iso_id([db::SQLite.DB,] M::T, I::T) where T <: Union{Integer, AbstractVector{Integer}}
@@ -160,16 +164,17 @@ Returns the global isotopologue IDs for the given molecule ids and local ids pro
 """
 function iso_id(db::SQLite.DB, M, I)
     MI = zip(M, I)
-    sql =   "SELECT     global_id 
-            FROM        isotopologues 
-            WHERE 	    (molecule_id, local_id)
-            IN          (VALUES " * join(["(" * join("?"^length(t), ',') * ")" for t in MI], ',') * ")"      
-    res = DBInterface.execute(db, 
-        sql,
-        [i for t in MI for i in t]) |> DataFrame    
+    sql = "SELECT     global_id
+          FROM        isotopologues
+          WHERE 	    (molecule_id, local_id)
+          IN          (VALUES " *
+          join(["(" * join("?"^length(t), ',') * ")" for t in MI], ',') * ")"
+    res = DBInterface.execute(db,
+                              sql,
+                              [i for t in MI for i in t]) |> DataFrame
     if (size(res)[1] == 0)
         return missing
-    else 
+    else
         return res[:, :global_id]
     end
 end
@@ -184,42 +189,43 @@ function iso_id(db::SQLite.DB, formulas)
     search_str = SQLite.esc_id(formulas)
 
     # get globals ids
-    res = DBInterface.execute(db, 
-        "SELECT     iso.global_id AS global_id
-        FROM        isotopologues iso
-        LEFT JOIN   molecules mol
-        ON          (iso.molecule_id = mol.id)
-        WHERE       (mol.formula IN (" * search_str * ") OR iso.formula IN (" * search_str * "))
-        ORDER BY    iso.abundance DESC, iso.molecule_id, iso.local_id") |> DataFrame
+    res = DBInterface.execute(db,
+                              "SELECT     iso.global_id AS global_id
+                              FROM        isotopologues iso
+                              LEFT JOIN   molecules mol
+                              ON          (iso.molecule_id = mol.id)
+                              WHERE       (mol.formula IN (" * search_str *
+                              ") OR iso.formula IN (" * search_str * "))
+ORDER BY    iso.abundance DESC, iso.molecule_id, iso.local_id") |> DataFrame
 
     if (size(res)[1] == 0)
         return missing
-    else 
+    else
         return res[:, :global_id]
     end
 end
 iso_id(formulas) = iso_id(current_db(), formulas)
 
-function isotopologue(db::SQLite.DB, global_id)    
-    DBInterface.execute(db, 
-        "SELECT     * 
-        FROM        isotopologues
-        WHERE       global_id = ?", [global_id]) |> DataFrame
+function isotopologue(db::SQLite.DB, global_id)
+    DBInterface.execute(db,
+                        "SELECT     *
+                        FROM        isotopologues
+                        WHERE       global_id = ?", [global_id]) |> DataFrame
 end
 isotopologue(global_id) = isotopologue(current_db(), global_id)
 
-query_local_db(db::SQLite.DB, sql::AbstractString, params=()) = DBInterface.execute(db, sql, params)
-query_local_db(sql::AbstractString, params=()) = query_local_db(current_db(), sql, params)
+function query_local_db(db::SQLite.DB, sql::AbstractString, params = ())
+    DBInterface.execute(db, sql, params)
+end
+query_local_db(sql::AbstractString, params = ()) = query_local_db(current_db(), sql, params)
 
 ##
 const HITRAN_URL = "https://hitran.org/lbl/api?"
 
-function build_request_url!(
-    ids::Union{T, AbstractVector{T}},
-    ν_min::Number,
-    ν_max::Number,
-    parameters::AbstractVector{String}
-) where T <: Integer
+function build_request_url!(ids::Union{T, AbstractVector{T}},
+                            ν_min::Number,
+                            ν_max::Number,
+                            parameters::AbstractVector{String}) where {T <: Integer}
     # global iso id and transition id should always be included
     if "trans_id" ∉ parameters
         pushfirst!(parameters, "trans_id")
@@ -232,40 +238,47 @@ function build_request_url!(
     par_string = join(parameters, ',')
 
     # build url
-    url = @sprintf(
-        "%siso_ids_list=%s&numin=%.2f&numax=%.2f&fixwidth=0&sep=[comma]&request_params=%s",
-        HITRAN_URL,
-        id_string,
-        ν_min, ν_max,
-        par_string
-    )
+    url = @sprintf("%siso_ids_list=%s&numin=%.2f&numax=%.2f&fixwidth=0&sep=[comma]&request_params=%s",
+                   HITRAN_URL,
+                   id_string,
+                   ν_min, ν_max,
+                   par_string)
 
     return url
 end
 
-function download_HITRAN(    
-    url::String,
-    parameters::AbstractVector{String};
-    verbose=false)
-        
+function download_HITRAN(url::String,
+                         parameters::AbstractVector{String};
+                         verbose = true)
     tmp_file = tempname()
     if verbose
         println("Download data from HITRAN at: ", url)
     end
-    response = Downloads.request(
-        url;
-        output=tmp_file,
-        progress=verbose ? print_progress : nothing, 
-        throw=false        
-    )
+
+    # Fix for the HITRAN server sending invalid Content-Length headers
+    dl = Downloader()
+    dl.easy_hook = function(easy, info)
+        Downloads.Curl.setopt(easy, Downloads.Curl.CURLOPT_IGNORE_CONTENT_LENGTH, 1)
+    end
+
+    response = Downloads.request(url;
+                            output = tmp_file,
+                            progress=verbose ? print_progress : nothing,
+                            verbose,
+                            timeout=30,
+                            throw = true,
+                            downloader=dl)
     #=if isa(response, RequestError)
         if verbose
             @error "Download failed"
             println(response)
         end
     end=#
+    println(response)
 
-    df = CSV.File(tmp_file; header=parameters, missingstring="#")    
+    @info "CSV start", tmp_file
+    df = CSV.File(tmp_file; header = parameters, missingstring = "#")
+    @info "CSV end"
 
     return df
 end
