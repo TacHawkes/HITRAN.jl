@@ -249,7 +249,7 @@ end
 
 function download_HITRAN(url::String,
                          parameters::AbstractVector{String};
-                         verbose = true)
+                         verbose = false)
     tmp_file = tempname()
     if verbose
         println("Download data from HITRAN at: ", url)
@@ -259,13 +259,14 @@ function download_HITRAN(url::String,
     dl = Downloader()
     dl.easy_hook = function(easy, info)
         Downloads.Curl.setopt(easy, Downloads.Curl.CURLOPT_IGNORE_CONTENT_LENGTH, 1)
+        Downloads.Curl.setopt(easy, Downloads.Curl.CURLOPT_LOW_SPEED_TIME, 100)
     end
 
     response = Downloads.request(url;
                             output = tmp_file,
                             progress=verbose ? print_progress : nothing,
                             verbose,
-                            timeout=30,
+                            timeout=100,
                             throw = true,
                             downloader=dl)
     #=if isa(response, RequestError)
@@ -274,11 +275,8 @@ function download_HITRAN(url::String,
             println(response)
         end
     end=#
-    println(response)
 
-    @info "CSV start", tmp_file
     df = CSV.File(tmp_file; header = parameters, missingstring = "#")
-    @info "CSV end"
 
     return df
 end
