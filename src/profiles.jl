@@ -16,13 +16,13 @@ function get_components(tables::AbstractVector{String})
     # use all components in the tables and get their natural abundance
     subqueries = []
     for table in tables
-        push!(subqueries, " 
+        push!(subqueries, "
             SELECT      DISTINCT global_iso_id AS gid,
                         iso.molecule_id AS molecule_id,
                         iso.local_id AS local_id,
-                        iso.abundance AS abundance 
-            FROM        " * table * " 
-            LEFT JOIN   isotopologues iso 
+                        iso.abundance AS abundance
+            FROM        " * table * "
+            LEFT JOIN   isotopologues iso
             ON          (global_id=gid) ")
     end
     sql = join(subqueries, " UNION ALL ")
@@ -37,7 +37,7 @@ end
 
 function get_components(comps::AbstractVector{Tuple{T, T}}) where {T <: Integer}
     # load the natural abundances
-    sql = " SELECT  molecule_id, local_id, abundance 
+    sql = " SELECT  molecule_id, local_id, abundance
             FROM    isotopologues
             WHERE 	(molecule_id, local_id)
             IN 		(VALUES " *
@@ -56,7 +56,7 @@ function get_components(comps::Dict{Tuple{T, T}, V}) where {T <: Integer
                                                             } where {V <:
                                                                      AbstractFloat}
     # load the natural abundances
-    sql = " SELECT  molecule_id, local_id, abundance 
+    sql = " SELECT  molecule_id, local_id, abundance
             FROM    isotopologues
             WHERE 	(molecule_id, local_id)
             IN 		(VALUES " *
@@ -110,7 +110,7 @@ function get_diluents(diluent::Dict{Tuple{Int, Int}, Dict{Symbol, V}},
             # insert provided values
             diluents[mi_tuple] = diluent[mi_tuple]
         else
-            # default values and handle H2O            
+            # default values and handle H2O
             if has_water
                 diluents[mi_tuple] = Dict(:self => abundance * (1 - water_abundance),
                                           :air => (1 - abundance) * (1 - water_abundance),
@@ -195,7 +195,7 @@ chosen from the tables provided.
 # Keyword arguments
 - `components`: the components of the gas mixture for the calculation. Can be either a vector of tuples with `(molecule_id, local_iso_id)`
                 or a `Dict` with the `(molecule_id, local_iso_id)` tuple as key and the abundance as value. If the vector of tuples is supplied
-                the natural abundance will be used, so this makes no sense for gas mixtures other than isotopologues of the same molecule.                
+                the natural abundance will be used, so this makes no sense for gas mixtures other than isotopologues of the same molecule.
 - `intensity_threshold`: the minimum line strength in ``cm^{-1}/(\\text{molecule} \\cdot cm^{-2})``
 - `pressure`: the environmental pressure in atmospheres (default: $c_p_ref atm)
 - `temperature`: the environmental temperature in Kelvin (default: $c_T_ref K)
@@ -242,7 +242,7 @@ function α(tables,
            ν_wing_hw,
            natural_abundances,
            molar_masses)
-    # allocate output    
+    # allocate output
     data = zeros(eltype(ν), length(ν))
 
     # lineshape function
@@ -256,8 +256,8 @@ function α(tables,
     for table in tables
         # get line data (note: as :standard is enforced when fetching HITRAN
         # source data, it is assumed that at least all these fields exist and
-        # no further check is performed)   
-        result = query_local_db("SELECT     * 
+        # no further check is performed)
+        result = query_local_db("SELECT     *
                                 FROM        " * table * "
                                 WHERE 	    (molec_id, local_iso_id)
                                 IN 		    (VALUES " *
@@ -290,7 +290,7 @@ AND         nu <= ?", vcat([i for t in keys(components) for i in t], [ν_range..
             mid = getvalue(result, ind_mid, Int)
             lid = getvalue(result, ind_lid, Int)
             MI = (mid, lid)
-            # partition sum            
+            # partition sum
             if last_id != gid
                 q_t = tips(gid, temperature)
                 q_t_ref = tips(gid, c_T_ref)
@@ -393,9 +393,9 @@ end
 # specialized getvalue functions which resemble the SQLite.getvalue functions but optimized for the type
 # of access we have in this module
 function getvalue(q::SQLite.Query, col::Int, ::Type{T}) where {T}
-    handle = SQLite._stmt(q.stmt).handle
-    t = SQLite.sqlite3_column_type(handle, col)
-    if t == SQLite.SQLITE_NULL
+    handle = SQLite._get_stmt_handle(q.stmt)
+    t = SQLite.C.sqlite3_column_type(handle, col)
+    if t == SQLite.C.SQLITE_NULL
         return zero(T)
     else
         return SQLite.sqlitevalue(T, handle, col)
@@ -403,12 +403,12 @@ function getvalue(q::SQLite.Query, col::Int, ::Type{T}) where {T}
 end
 
 function getvalue(q::SQLite.Query, col::Int, col_fb::Int, ::Type{T}) where {T}
-    handle = SQLite._stmt(q.stmt).handle
-    t = SQLite.sqlite3_column_type(handle, col)
-    t_fb = SQLite.sqlite3_column_type(handle, col_fb)
-    if t == SQLite.SQLITE_NULL && t_fb == SQLite.SQLITE_NULL
+    handle = SQLite._get_stmt_handle(q.stmt)
+    t = SQLite.C.sqlite3_column_type(handle, col)
+    t_fb = SQLite.C.sqlite3_column_type(handle, col_fb)
+    if t == SQLite.C.SQLITE_NULL && t_fb == SQLite.C.SQLITE_NULL
         return zero(T)
-    elseif t != SQLite.SQLITE_NULL
+    elseif t != SQLite.C.SQLITE_NULL
         return SQLite.sqlitevalue(T, handle, col)
     else
         return SQLite.sqlitevalue(T, handle, col_fb)
@@ -457,14 +457,14 @@ function hartmann_tran_lineshape(q,
     γ_0 = γ_2 = Δ_0 = Δ_2 = zero(Float64)
     ν_VC = η = zero(ComplexF64)
 
-    # loop over all diluents and build combined line parameters    
+    # loop over all diluents and build combined line parameters
     γ_0_dil = n_dil = T_ref = γ_0t = Δ_0_dil = Δ_0p_dil = Δ_0t = γ_2_dil = γ_2t = zero(Float64)
     Δ_2_dil = Δ_2t = η_dil = ν_VC_dil = κ_dil = zero(Float64)
     for (diluent_name, diluent_abundance) in diluent
-        # get Hartmann-Tran or Voigt parameters if available        
+        # get Hartmann-Tran or Voigt parameters if available
         ht_dil = ht_args.fields[diluent_name]
         vg_dil = ht_args.voigt_args.fields[diluent_name]
-        # γ_0 contribution        
+        # γ_0 contribution
         γ_0_dil = get_line_parameter(q, ht_dil.γ_0, vg_dil.γ_0)
         n_dil = get_line_parameter(q, ht_dil.n, vg_dil.n)
         if (diluent_name == :self || n_dil == c_default_zero)
@@ -475,28 +475,28 @@ function hartmann_tran_lineshape(q,
                              c_p_ref, n_dil)
         γ_0 += diluent_abundance * γ_0t
 
-        # Δ_0 contribution        
+        # Δ_0 contribution
         Δ_0_dil = get_line_parameter(q, ht_dil.Δ_0, vg_dil.Δ_0)
         Δ_0p_dil = get_line_parameter(q, ht_dil.Δ_0p, vg_dil.Δ_0p)
         T_ref = (ht_dil.Δ_0 !== missing && ht_dil.Δ_0p !== missing) ? ht_args.T_ht : c_T_ref
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - T_ref) * pressure / c_p_ref
         Δ_0 += diluent_abundance * Δ_0t
 
-        # γ_2 contribution                
+        # γ_2 contribution
         γ_2_dil = get_line_parameter(q, ht_dil.γ_2)
         γ_2t = γ_2_dil * pressure / c_p_ref
         γ_2 += diluent_abundance * γ_2t
 
-        #  Δ_2 contribution                
+        #  Δ_2 contribution
         Δ_2_dil = get_line_parameter(q, ht_dil.Δ_2)
         Δ_2t = Δ_2_dil * pressure / c_p_ref
         Δ_2 += diluent_abundance * Δ_2t
 
-        # η contribution        
+        # η contribution
         η_dil = get_line_parameter(q, ht_dil.η)
         η += diluent_abundance * η_dil * (γ_2t - im * Δ_2t)
 
-        # ν_VC contribution        
+        # ν_VC contribution
         ν_VC_dil = get_line_parameter(q, ht_dil.ν_VC)
         κ_dil = get_line_parameter(q, ht_dil.κ)
         ν_VC += diluent_abundance * ν_VC_dil * (T_ref / temperature)^κ_dil * pressure
@@ -564,7 +564,7 @@ function prepare_hartmann_tran_kwargs(; kwargs...)
     # prepare field names for diluents
     fields = Dict{Symbol, HartmannTranDiluentIndices}()
     #Dict{Symbol,Union{Int,Missing}}
-    # get all diluent names    
+    # get all diluent names
     for diluent_name in get_diluent_names(diluent)
         # lookup fields
 
@@ -635,9 +635,9 @@ function voigt_lineshape(q,
     γ_D = γ_Doppler(temperature, ν_0, mass)
     γ_0 = Δ_0 = Float64(0.0)
 
-    # loop over all diluents and build combined line parameters    
+    # loop over all diluents and build combined line parameters
     for (diluent_name, diluent_abundance) in diluent
-        # get Voigt parameters if available        
+        # get Voigt parameters if available
         vg_dil = voigt_args.fields[diluent_name]
 
         # γ_0 contribution
@@ -650,7 +650,7 @@ function voigt_lineshape(q,
                              c_p_ref, n_dil)
         γ_0 += diluent_abundance * γ_0t
 
-        # Δ_0 contribution        
+        # Δ_0 contribution
         Δ_0_dil = get_line_parameter(q, vg_dil.Δ_0)
         Δ_0p_dil = get_line_parameter(q, vg_dil.Δ_0p)
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
@@ -723,9 +723,9 @@ function speed_dependent_voigt_lineshape(q,
     γ_D = γ_Doppler(temperature, ν_0, mass)
     γ_0 = Δ_0 = γ_2 = Float64(0.0)
 
-    # loop over all diluents and build combined line parameters    
+    # loop over all diluents and build combined line parameters
     for (diluent_name, diluent_abundance) in diluent
-        # get Voigt parameters if available    
+        # get Voigt parameters if available
         sd_dil = sd_args.fields[diluent_name]
 
         # γ_0 contribution
@@ -738,7 +738,7 @@ function speed_dependent_voigt_lineshape(q,
                              c_p_ref, n_dil)
         γ_0 += diluent_abundance * γ_0t
 
-        # Δ_0 contribution        
+        # Δ_0 contribution
         Δ_0_dil = get_line_parameter(q, sd_dil.Δ_0)
         Δ_0p_dil = get_line_parameter(q, sd_dil.Δ_0p)
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
@@ -825,7 +825,7 @@ function lorentz_lineshape(q,
                            lorentz_args)
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])
     ind_air::Int = q.lookup[:n_air]
-    # initialize lineshape specific parameters        
+    # initialize lineshape specific parameters
     γ_0 = Δ_0 = Float64(0.0)
 
     # loop over all diluents and build combined line parameters
@@ -842,7 +842,7 @@ function lorentz_lineshape(q,
                              c_p_ref, n_dil)
         γ_0 += diluent_abundance * γ_0t
 
-        # Δ_0 contribution        
+        # Δ_0 contribution
         Δ_0_dil = get_line_parameter(q, lor_dil.Δ_0)
         Δ_0p_dil = get_line_parameter(q, lor_dil.Δ_0p)
         Δ_0t = Δ_0_dil + Δ_0p_dil * (temperature - c_T_ref) * pressure / c_p_ref
@@ -881,7 +881,7 @@ function gauss_lineshape(q,
                          factor,
                          data,
                          ::Any)
-    # initialize lineshape specific parameters    
+    # initialize lineshape specific parameters
     ν_0::Float64 = get_line_parameter(q, q.lookup[:nu])
     γ_D = γ_Doppler(temperature, ν_0, mass)
     Δ_0 = get_line_parameter(q, q.lookup[:delta_air]) * pressure / c_p_ref

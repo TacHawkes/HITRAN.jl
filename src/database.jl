@@ -257,18 +257,18 @@ function download_HITRAN(url::String,
 
     # Fix for the HITRAN server sending invalid Content-Length headers
     dl = Downloader()
-    dl.easy_hook = function(easy, info)
+    dl.easy_hook = function (easy, info)
         Downloads.Curl.setopt(easy, Downloads.Curl.CURLOPT_IGNORE_CONTENT_LENGTH, 1)
         Downloads.Curl.setopt(easy, Downloads.Curl.CURLOPT_LOW_SPEED_TIME, 100)
     end
 
     response = Downloads.request(url;
-                            output = tmp_file,
-                            progress=verbose ? print_progress : nothing,
-                            verbose,
-                            timeout=100,
-                            throw = true,
-                            downloader=dl)
+                                 output = tmp_file,
+                                 progress = verbose ? print_progress : nothing,
+                                 verbose,
+                                 timeout = 100,
+                                 throw = true,
+                                 downloader = dl)
     #=if isa(response, RequestError)
         if verbose
             @error "Download failed"

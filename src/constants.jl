@@ -9,14 +9,14 @@ const c_p_ref = 1.0
 # conversion factor atm to Pa
 const c_atm_factor = 101325.0
 
-#= 
+#=
 Hartmann-Tran reference temperatures for line parameters
 
-Reference: 
+Reference:
     Wcisło P, Gordon IE, Tran H, Tan Y, Hu S-M, Campargue A, et al.
-    The im- plementation of non-Voigt line profiles in the HITRAN 
+    The im- plementation of non-Voigt line profiles in the HITRAN
     database: H2 case study. J Quant Spectrosc Radiat Transf 2016;177:75–91.
-    http://dx.doi.org/10.1016/j.jqsrt.2016.01.024. 
+    http://dx.doi.org/10.1016/j.jqsrt.2016.01.024.
 =#
 const c_HT_T_ref = Base.ImmutableDict((0.0, 100.0) => 50.0,
                                       (100.0, 200.0) => 150.0,

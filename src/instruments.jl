@@ -36,7 +36,7 @@ const instrument_functions = Dict{Symbol, Function}(:rectangular => instrument_r
 """
     apply_instrument_function(ν, α[, instrument_function=:rectangular, instrument_wing=10.0, instrument_resolution=0.1])
 
-Applies an instrument function to the given input spectrum. 
+Applies an instrument function to the given input spectrum.
 
 # Arguments
 - `ν`: The wavenumber vector (NOTE: Uniform spacing is assumed but not checked!)

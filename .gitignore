@@ -18,3 +18,5 @@ Thumbs.db
 /Manifest.toml
 /src/tools
 /examples
+
+test/invalidations.jl
