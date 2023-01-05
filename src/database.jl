@@ -238,11 +238,7 @@ function build_request_url!(ids::Union{T, AbstractVector{T}},
     par_string = join(parameters, ',')
 
     # build url
-    url = @sprintf("%siso_ids_list=%s&numin=%.2f&numax=%.2f&fixwidth=0&sep=[comma]&request_params=%s",
-                   HITRAN_URL,
-                   id_string,
-                   ν_min, ν_max,
-                   par_string)
+    url ="$(HITRAN_URL)iso_ids_list=$id_string&numin=$(round(ν_min, digits=2))&numax=$(round(ν_max, digits=2))&fixwidth=0&sep=[comma]&request_params=$par_string"
 
     return url
 end

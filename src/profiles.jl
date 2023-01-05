@@ -569,38 +569,23 @@ function prepare_hartmann_tran_kwargs(; kwargs...)
         # lookup fields
 
         fields[diluent_name] = HartmannTranDiluentIndices(lookup_symbol(q,
-                                                                        Symbol(@sprintf("gamma_HT_0_%s_%d",
-                                                                                        diluent_name,
-                                                                                        T_ht))),
+                                                                        Symbol("gamma_HT_0_$(diluent_name)_$(T_ht)")),
                                                           lookup_symbol(q,
-                                                                        Symbol(@sprintf("n_HT_0_%s_%d",
-                                                                                        diluent_name,
-                                                                                        T_ht))),
+                                                                        Symbol("n_HT_0_$(diluent_name)_$(T_ht)")),
                                                           lookup_symbol(q,
-                                                                        Symbol(@sprintf("delta_HT_0_%s_%d",
-                                                                                        diluent_name,
-                                                                                        T_ht))),
+                                                                        Symbol("delta_HT_0_$(diluent_name)_$(T_ht)")),
                                                           lookup_symbol(q,
-                                                                        Symbol(@sprintf("deltap_HT_0_%s_%d",
-                                                                                        diluent_name,
-                                                                                        T_ht))),
+                                                                        Symbol("deltap_HT_0_$(diluent_name)_$(T_ht)")),
                                                           lookup_symbol(q,
-                                                                        Symbol(@sprintf("gamma_HT_2_%s_%d",
-                                                                                        diluent_name,
-                                                                                        T_ht))),
+                                                                        Symbol("gamma_HT_2_$(diluent_name)_$(T_ht)")),
                                                           lookup_symbol(q,
-                                                                        Symbol(@sprintf("delta_HT_2_%s_%d",
-                                                                                        diluent_name,
-                                                                                        T_ht))),
+                                                                        Symbol("delta_HT_2_$(diluent_name)_$(T_ht)")),
                                                           lookup_symbol(q,
-                                                                        Symbol(@sprintf("eta_HT_%s",
-                                                                                        diluent_name))),
+                                                                        Symbol("eta_HT_$(diluent_name)")),
                                                           lookup_symbol(q,
-                                                                        Symbol(@sprintf("nu_HT_%s",
-                                                                                        diluent_name))),
+                                                                        Symbol("nu_HT_$(diluent_name)")),
                                                           lookup_symbol(q,
-                                                                        Symbol(@sprintf("kappa_HT_%s",
-                                                                                        diluent_name))))
+                                                                        Symbol("kappa_HT_$(diluent_name)")))
     end
     voigt_args = prepare_voigt_kwargs(; kwargs...)
     return HartmannTranProfileArguments(T_ht,
@@ -678,17 +663,13 @@ function prepare_voigt_kwargs(; kwargs...)
     fields = Dict{Symbol, VoigtDiluentIndices}()
     for diluent_name in get_diluent_names(diluent)
         fields[diluent_name] = VoigtDiluentIndices(lookup_symbol(q,
-                                                                 Symbol(@sprintf("gamma_%s",
-                                                                                 diluent_name))),
+                                                                 Symbol("gamma_$(diluent_name)")),
                                                    lookup_symbol(q,
-                                                                 Symbol(@sprintf("n_%s",
-                                                                                 diluent_name))),
+                                                                 Symbol("n_$(diluent_name)")),
                                                    lookup_symbol(q,
-                                                                 Symbol(@sprintf("delta_%s",
-                                                                                 diluent_name))),
+                                                                 Symbol("delta_$(diluent_name)")),
                                                    lookup_symbol(q,
-                                                                 Symbol(@sprintf("deltap_%s",
-                                                                                 diluent_name))))
+                                                                 Symbol("deltap_$(diluent_name)")))
     end
 
     return VoigtProfileArguments(fields)
@@ -783,20 +764,15 @@ function prepare_speed_dependent_voigt_kwargs(; kwargs...)
     fields = Dict{Symbol, SpeedDependentVoigtDiluentIndices}()
     for diluent_name in get_diluent_names(diluent)
         fields[diluent_name] = SpeedDependentVoigtDiluentIndices(lookup_symbol(q,
-                                                                               Symbol(@sprintf("gamma_%s",
-                                                                                               diluent_name))),
+                                                                               Symbol("gamma_$(diluent_name)")),
                                                                  lookup_symbol(q,
-                                                                               Symbol(@sprintf("n_%s",
-                                                                                               diluent_name))),
+                                                                               Symbol("n_$(diluent_name)")),
                                                                  lookup_symbol(q,
-                                                                               Symbol(@sprintf("delta_%s",
-                                                                                               diluent_name))),
+                                                                               Symbol("delta_$(diluent_name)")),
                                                                  lookup_symbol(q,
-                                                                               Symbol(@sprintf("deltap_%s",
-                                                                                               diluent_name))),
+                                                                               Symbol("deltap_$(diluent_name)")),
                                                                  lookup_symbol(q,
-                                                                               Symbol(@sprintf("sd_%s",
-                                                                                               diluent_name))))
+                                                                               Symbol("sd_$(diluent_name)")))
     end
 
     return SpeedDependentVoigtProfileArguments(fields)

@@ -9,6 +9,7 @@ using Test
         @test isapprox(tips(i, HITRAN.c_T_ref), q_t0, atol = tolerance)
     end end
     @testset "Database and absorption calculation" begin
+        open_database(joinpath(@__DIR__, "HITRAN.sqlite"))
         @test_nowarn fetch!("StdAtm", iso_id(7, 1), 13000, 13150, [:standard])
         @test isequal(iso_id(["H2O"])[1], 1)
         @test isequal(iso_id(7, 1)[1], 36)

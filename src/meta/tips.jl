@@ -2,7 +2,7 @@ const tips_cache = Dict{Integer, Matrix{Float64}}()
 
 @inline function tips(iso_id::Integer, temp::T)::Float64 where {T <: AbstractFloat}
     data::Matrix{Float64} = get!(tips_cache, iso_id) do
-        path = joinpath(module_path, "meta", "q", @sprintf("q%d.jld2", iso_id))
+        path = joinpath(module_path, "meta", "q", "q$iso_id.jld2")
         if isfile(path) === false
             d = [c_T_ref isotopologue(iso_id)[1, :q_t0];
                  (c_T_ref+1.0) isotopologue(iso_id)[1, :q_t0]]
