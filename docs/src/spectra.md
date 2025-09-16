@@ -59,7 +59,7 @@ for (s, fn) in HITRAN.instrument_functions
     plot!(x, fn(x, 0.1), label=String(s), lw=2)
 end
 
-savefig("plot.svg")
+savefig("plot.svg") nothing # hide
 ```
 
 ![](plot.svg)
