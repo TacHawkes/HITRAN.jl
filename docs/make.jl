@@ -1,6 +1,9 @@
 using Documenter
 using HITRAN
 
+# headless mode
+ENV["GKSwstype"] = "100"
+
 makedocs(modules = [HITRAN],
          authors = "Oliver Kliebisch <oliver@kliebisch.net> and contributors",
          repo = "https://github.com/tachawkes/hitran.jl/blob/{commit}{path}#L{line}",
